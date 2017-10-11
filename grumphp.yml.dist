@@ -1,0 +1,33 @@
+imports:
+  - { resource: vendor/drupol/php-conventions/config/php71/grumphp.yml }
+
+parameters:
+  tasks.phpstan.ignore_patterns:
+    - vendor/
+    - demo-client/
+    - demo-server/
+    - spec/
+  tasks.phpcs.ignore_patterns:
+    - vendor/
+    - demo-client/
+    - demo-server/
+    - spec/
+  extra_tasks:
+    phpspec:
+      verbose: true
+      metadata:
+        priority: 3000
+    infection:
+      threads: 10
+      test_framework: phpspec
+      configuration: infection.json.dist
+      min_msi: 75
+      min_covered_msi: 75
+      metadata:
+        priority: 2000
+    securitychecker:
+      lockfile: ./composer.lock
+      format: ~
+      end_point: ~
+      timeout: ~
+      run_always: false

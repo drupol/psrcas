@@ -1,0 +1,41 @@
+{
+  "name": "drupol/psrcas",
+  "type": "library",
+  "description": "PSR CAS, a standard library for CAS authentication.",
+  "keywords": [
+    "authentication",
+    "cas",
+    "psr",
+    "single-sign-on"
+  ],
+  "license": "MIT",
+  "require": {
+    "php": ">= 7.1.3",
+    "ext-simplexml": "*",
+    "psr/http-client": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.0",
+    "psr/log": "^1.0"
+  },
+  "require-dev": {
+    "drupol/php-conventions": "^1",
+    "friends-of-phpspec/phpspec-code-coverage": "^4.0 || ^5.0",
+    "infection/infection": "^0.13 || ^0.14",
+    "monolog/monolog": "^1.0",
+    "nyholm/psr7": "^1.2",
+    "phpspec/phpspec": "^5.0 || ^6.0",
+    "phpstan/phpstan-strict-rules": "^0.11.1",
+    "scrutinizer/ocular": "^1",
+    "symfony/http-client": "^4.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "drupol\\psrcas\\": "./src/"
+    }
+  },
+  "scripts": {
+    "grumphp": "./vendor/bin/grumphp run",
+    "phpspec": "./vendor/bin/phpspec run",
+    "scrutinizer": "./vendor/bin/ocular code-coverage:upload --format=php-clover build/logs/clover.xml"
+  }
+}

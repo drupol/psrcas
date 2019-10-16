@@ -38,6 +38,17 @@ interface CasProtocolInterface
     public function getUriFactory(): UriFactoryInterface;
 
     /**
+     * Handle the request made on the proxy callback URL.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     *   The request.
+     *
+     * @return \Psr\Http\Message\ResponseInterface
+     *   The response.
+     */
+    public function handleProxyCallback(ServerRequestInterface $request): ResponseInterface;
+
+    /**
      * @param \Psr\Http\Message\ResponseInterface $response
      *
      * @return bool
@@ -50,8 +61,8 @@ interface CasProtocolInterface
      * @param \Psr\Http\Message\ServerRequestInterface $request
      * @param array $parameters
      *
-     * @return \Psr\Http\Message\ResponseInterface
-     *   Null if user is already authenticated, the HTTP Response otherwise.
+     * @return null|\Psr\Http\Message\ResponseInterface
+     *   An HTTP response or null.
      */
     public function login(
         ServerRequestInterface $request,
@@ -65,6 +76,7 @@ interface CasProtocolInterface
      * @param array $parameters
      *
      * @return \Psr\Http\Message\ResponseInterface
+     *   An HTTP response.
      */
     public function logout(
         ServerRequestInterface $request,

@@ -8,6 +8,7 @@ use drupol\psrcas\Cas\Protocol\V3\Cas;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\ServerRequest;
 use PhpSpec\ObjectBehavior;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -17,7 +18,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 class CasSpec extends ObjectBehavior
 {
-    public function it_can_be_constructed_without_base_url(LoggerInterface $logger)
+    public function it_can_be_constructed_without_base_url(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
             'base_url' => '//////',
@@ -32,9 +33,9 @@ class CasSpec extends ObjectBehavior
         ];
 
         $client = new Psr18Client($this->getHttpClientMock());
-        $uriFactory = $responseFactory = new Psr17Factory();
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
 
-        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory);
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
 
         $request = new ServerRequest('GET', 'http://foo');
 
@@ -44,7 +45,7 @@ class CasSpec extends ObjectBehavior
             ->shouldReturn(['Location' => ['/login']]);
     }
 
-    public function it_can_deal_with_bad_requests(LoggerInterface $logger)
+    public function it_can_deal_with_bad_requests(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
             'base_url' => 'http://local/cas',
@@ -60,9 +61,9 @@ class CasSpec extends ObjectBehavior
         ];
 
         $client = new Psr18Client($this->getHttpClientMock());
-        $uriFactory = $responseFactory = new Psr17Factory();
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
 
-        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory);
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_ticket=true', ['Content-Type' => 'text/xml']);
 
@@ -98,7 +99,7 @@ class CasSpec extends ObjectBehavior
             ->shouldBeNull();
     }
 
-    public function it_can_detect_wrong_url(LoggerInterface $logger)
+    public function it_can_detect_wrong_url(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
             'base_url' => '',
@@ -110,9 +111,9 @@ class CasSpec extends ObjectBehavior
         ];
 
         $client = new Psr18Client($this->getHttpClientMock());
-        $uriFactory = $responseFactory = new Psr17Factory();
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
 
-        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory);
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
 
         $logger
             ->error('Invalid URL: no "base_uri" option was provided and host or scheme is missing in "%5C%3F&!@%23%20//%20%5C%20http://%20foo%20bar".')
@@ -323,7 +324,7 @@ class CasSpec extends ObjectBehavior
             ->shouldBeNull();
     }
 
-    public function it_can_validate_a_service_ticket(LoggerInterface $logger)
+    public function it_can_validate_a_service_ticket(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
             'base_url' => '',
@@ -341,9 +342,9 @@ class CasSpec extends ObjectBehavior
         ];
 
         $client = new Psr18Client($this->getHttpClientMock());
-        $uriFactory = $responseFactory = new Psr17Factory();
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
 
-        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory);
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket', ['Content-Type' => 'text/xml']);
 
@@ -483,7 +484,7 @@ class CasSpec extends ObjectBehavior
             ->shouldBeNull();
     }
 
-    public function it_can_verify_if_a_serviceValidate_request_is_valid(LoggerInterface $logger)
+    public function it_can_verify_if_a_serviceValidate_request_is_valid(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $from = 'http://local/';
 
@@ -573,7 +574,7 @@ class CasSpec extends ObjectBehavior
         $this->shouldHaveType(Cas::class);
     }
 
-    public function let(LoggerInterface $logger)
+    public function let(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
             'base_url' => 'http://local/cas',
@@ -604,9 +605,9 @@ class CasSpec extends ObjectBehavior
         ];
 
         $client = new Psr18Client($this->getHttpClientMock());
-        $uriFactory = $responseFactory = new Psr17Factory();
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
 
-        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory);
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
     }
 
     protected function getHttpClientMock()

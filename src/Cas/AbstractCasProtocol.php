@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace drupol\psrcas\Cas;
 
 use drupol\psrcas\Utils\Uri;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerInterface;
@@ -19,6 +22,13 @@ use Psr\Log\LoggerInterface;
  */
 abstract class AbstractCasProtocol implements CasProtocolInterface
 {
+    /**
+     * The cache.
+     *
+     * @var \Psr\Cache\CacheItemPoolInterface
+     */
+    private $cache;
+
     /**
      * The HTTP client.
      *
@@ -44,6 +54,13 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     private $responseFactory;
 
     /**
+     * The stream factory.
+     *
+     * @var \Psr\Http\Message\StreamFactoryInterface
+     */
+    private $streamFactory;
+
+    /**
      * The URI factory.
      *
      * @var \Psr\Http\Message\UriFactoryInterface
@@ -58,19 +75,33 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
      * @param \Psr\Http\Message\UriFactoryInterface $uriFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Psr\Http\Message\ResponseFactoryInterface $responseFactory
+     * @param \Psr\Cache\CacheItemPoolInterface $cache
+     * @param StreamFactoryInterface $streamFactory
      */
     public function __construct(
         array $properties,
         ClientInterface $client,
         UriFactoryInterface $uriFactory,
         LoggerInterface $logger,
-        ResponseFactoryInterface $responseFactory
+        ResponseFactoryInterface $responseFactory,
+        StreamFactoryInterface $streamFactory,
+        CacheItemPoolInterface $cache
     ) {
         $this->properties = $properties;
         $this->client = $client;
         $this->uriFactory = $uriFactory;
         $this->logger = $logger;
         $this->responseFactory = $responseFactory;
+        $this->streamFactory = $streamFactory;
+        $this->cache = $cache;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCache(): CacheItemPoolInterface
+    {
+        return $this->cache;
     }
 
     /**
@@ -108,6 +139,14 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     /**
      * {@inheritdoc}
      */
+    public function getStreamFactory(): StreamFactoryInterface
+    {
+        return $this->streamFactory;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getUriFactory(): UriFactoryInterface
     {
         return $this->uriFactory;
@@ -136,6 +175,27 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
                 );
 
             return false;
+        }
+
+        if ([] !== $pgtIou = $xml->xpath('cas:authenticationSuccess//cas:proxyGrantingTicket')) {
+            try {
+                $item = $this->getCache()->hasItem((string) $pgtIou[0]);
+            } catch (InvalidArgumentException $e) {
+                $item = null;
+            }
+
+            if (false === $item) {
+                $this
+                    ->getLogger()
+                    ->error(
+                        'Unable to validate the response because the pgtIou was not found.',
+                        [
+                            'response' => (string) $response->getBody(),
+                        ]
+                    );
+
+                return false;
+            }
         }
 
         return true;

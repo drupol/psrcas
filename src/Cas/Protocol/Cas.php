@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace drupol\psrcas\Cas\Protocol;
 
 use drupol\psrcas\Cas\AbstractCasProtocol;
+use drupol\psrcas\Utils\Uri;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -13,6 +15,91 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class Cas extends AbstractCasProtocol
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function handleProxyCallback(ServerRequestInterface $request): ResponseInterface
+    {
+        $uri = $request->getUri();
+
+        if (!(Uri::hasParams($uri, 'pgtId', 'pgtIou'))) {
+            $this
+                ->getLogger()
+                ->debug(
+                    'CAS server just checked the proxy callback endpoint.',
+                    ['request' => $request, 'uri' => (string) $request->getUri()]
+                );
+
+            // Todo: Verify what is supposed to return this response.
+            return $this
+                ->getResponseFactory()
+                ->createResponse(200);
+        }
+
+        if (Uri::hasParams($uri, 'pgtId') && !Uri::hasParams($uri, 'pgtIou')) {
+            $this
+                ->getLogger()
+                ->debug(
+                    'Missing proxy callback parameter (pgtIou).',
+                    ['request' => $request, 'uri' => (string) $request->getUri()]
+                );
+
+            // Todo: Verify what is supposed to return this response.
+            return $this
+                ->getResponseFactory()
+                ->createResponse(200);
+        }
+
+        if (Uri::hasParams($uri, 'pgtIou') && !Uri::hasParams($uri, 'pgtId')) {
+            $this
+                ->getLogger()
+                ->debug(
+                    'Missing proxy callback parameter (pgtId).',
+                    ['request' => $request, 'uri' => (string) $request->getUri()]
+                );
+
+            // Todo: Verify what is supposed to return this response.
+            return $this
+                ->getResponseFactory()
+                ->createResponse(200);
+        }
+
+        // Todo: Verify if those parameters must be retrieved in GET or POST.
+        $pgtId = Uri::getParam($uri, 'pgtId');
+        $pgtIou = Uri::getParam($uri, 'pgtIou');
+
+        try {
+            $cacheItem = $this->getCache()->getItem($pgtId);
+        } catch (InvalidArgumentException $e) {
+            $this
+                ->getLogger()
+                ->error($e->getMessage(), ['exception' => $e]);
+
+            // Todo: Verify what is supposed to return this response.
+            return $this
+                ->getResponseFactory()
+                ->createResponse(200);
+        }
+
+        $cacheItem->set($pgtIou);
+
+        $this
+            ->getCache()
+            ->save($cacheItem);
+
+        $this
+            ->getLogger()
+            ->debug(
+                'Storing proxy callback parameters (<em>pgtId</em> and <em>pgtIou</em>)',
+                ['pgtId' => $pgtId, 'pgtIou' => $pgtIou]
+            );
+
+        // Todo: Verify what is supposed to return this response.
+        return $this
+            ->getResponseFactory()
+            ->createResponse(200);
+    }
+
     /**
      * {@inheritdoc}
      */

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace drupol\psrcas\Cas;
 
 use drupol\psrcas\Utils\Uri;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -19,6 +20,13 @@ use Psr\Log\LoggerInterface;
  */
 abstract class AbstractCasProtocol implements CasProtocolInterface
 {
+    /**
+     * The cache.
+     *
+     * @var \Psr\Cache\CacheItemPoolInterface
+     */
+    private $cache;
+
     /**
      * The HTTP client.
      *
@@ -58,19 +66,30 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
      * @param \Psr\Http\Message\UriFactoryInterface $uriFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Psr\Http\Message\ResponseFactoryInterface $responseFactory
+     * @param \Psr\Cache\CacheItemPoolInterface $cache
      */
     public function __construct(
         array $properties,
         ClientInterface $client,
         UriFactoryInterface $uriFactory,
         LoggerInterface $logger,
-        ResponseFactoryInterface $responseFactory
+        ResponseFactoryInterface $responseFactory,
+        CacheItemPoolInterface $cache
     ) {
         $this->properties = $properties;
         $this->client = $client;
         $this->uriFactory = $uriFactory;
         $this->logger = $logger;
         $this->responseFactory = $responseFactory;
+        $this->cache = $cache;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCache(): CacheItemPoolInterface
+    {
+        return $this->cache;
     }
 
     /**

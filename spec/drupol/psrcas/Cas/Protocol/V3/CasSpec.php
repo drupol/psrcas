@@ -200,6 +200,11 @@ class CasSpec extends ObjectBehavior
             ->handleProxyCallback($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
+
         $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId');
 
         $this
@@ -210,6 +215,11 @@ class CasSpec extends ObjectBehavior
         $this
             ->handleProxyCallback($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
 
         $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtIou=pgtIou');
 
@@ -222,6 +232,11 @@ class CasSpec extends ObjectBehavior
             ->handleProxyCallback($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
+
         $request = new ServerRequest('GET', 'http://local/cas/proxy');
 
         $this
@@ -232,6 +247,11 @@ class CasSpec extends ObjectBehavior
         $this
             ->handleProxyCallback($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
 
         $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId&pgtIou=pgtIou');
 
@@ -247,6 +267,11 @@ class CasSpec extends ObjectBehavior
         $this
             ->handleProxyCallback($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
     }
 
     public function it_can_handle_proxy_callback_request_and_detect_issue_with_pgtIou()
@@ -256,6 +281,11 @@ class CasSpec extends ObjectBehavior
         $this
             ->handleProxyCallback($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
     }
 
     public function it_can_login()

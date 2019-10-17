@@ -8,9 +8,11 @@ use drupol\psrcas\Cas\Protocol\V3\Cas;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\ServerRequest;
 use PhpSpec\ObjectBehavior;
+use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Psr18Client;
@@ -166,6 +168,22 @@ class CasSpec extends ObjectBehavior
         $this
             ->getResponseFactory()
             ->shouldReturnAnInstanceOf(ResponseFactoryInterface::class);
+    }
+
+    public function it_can_get_a_stream_factory()
+    {
+        $this
+            ->getStreamFactory()
+            ->shouldReturnAnInstanceOf(StreamFactoryInterface::class);
+    }
+
+    public function it_can_handle_proxy_callback_request()
+    {
+        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtIou=pgtIou&pgtId=pgtId');
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
     }
 
     public function it_can_login()
@@ -348,17 +366,12 @@ class CasSpec extends ObjectBehavior
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket', ['Content-Type' => 'text/xml']);
 
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-        ];
-
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->getStatusCode()
             ->shouldReturn(200);
 
@@ -367,7 +380,7 @@ class CasSpec extends ObjectBehavior
             ->shouldNotBeCalled();
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404');
@@ -376,14 +389,8 @@ class CasSpec extends ObjectBehavior
             ->error('Invalid status code (404) for request URI (http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404).')
             ->shouldBeCalled();
 
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'http_code' => 404,
-        ];
-
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldBeNull();
 
         $logger
@@ -392,38 +399,24 @@ class CasSpec extends ObjectBehavior
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true');
 
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'invalid_xml' => 'true',
-        ];
-
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldNotBeNull();
 
         $logger
             ->error('Invalid status code (404) for request URI (http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404).')
             ->shouldBeCalled();
 
-        $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404');
-
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'renew' => true,
-        ];
-
-        $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket');
+        $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true');
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=0');
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldBeNull();
 
         $logger
@@ -432,41 +425,24 @@ class CasSpec extends ObjectBehavior
 
         $request = new ServerRequest('POST', 'foo');
 
-        $parameters = [
-            'service' => '',
-            'ticket' => '',
-        ];
-
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldBeNull();
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_header=true';
 
         $request = new ServerRequest('GET', $from);
 
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'invalid_header' => 'true',
-        ];
-
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true';
 
         $request = new ServerRequest('GET', $from);
 
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'renew' => true,
-        ];
-
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=0';
@@ -474,18 +450,70 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->serviceValidate($request)
             ->shouldBeNull();
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=false';
 
         $this
-            ->serviceValidate(new ServerRequest('GET', $from), $parameters)
+            ->serviceValidate(new ServerRequest('GET', $from))
             ->shouldBeNull();
     }
 
-    public function it_can_verify_if_a_serviceValidate_request_is_valid(LoggerInterface $logger, CacheItemPoolInterface $cache)
+    public function it_can_verify_if_a_serviceValidate_request_is_valid(LoggerInterface $logger, CacheItemPoolInterface $cache, CacheItemInterface $cacheItem)
     {
+        $properties = [
+            'base_url' => '',
+            'protocol' => [
+                'servicevalidate' => [
+                    'path' => 'http://local/cas/serviceValidate',
+                    'allowed_parameters' => [
+                        'service',
+                        'ticket',
+                        'http_code',
+                        'invalid_xml',
+                        'with_pgt',
+                        'pgt_valid',
+                        'pgt_is_not_string',
+                    ],
+                ],
+            ],
+        ];
+
+        $cacheItem
+            ->set('pgtId')
+            ->willReturn($cacheItem);
+
+        $cacheItem
+            ->expiresAfter(300)
+            ->willReturn($cacheItem);
+
+        $cache
+            ->save($cacheItem)
+            ->willReturn(true);
+
+        $cache
+            ->hasItem('pgtIou')
+            ->willReturn(true);
+
+        $cache
+            ->hasItem('pgtIouInvalid')
+            ->willReturn(false);
+
+        // See: https://github.com/phpspec/prophecy/pull/429
+        $cache
+            ->hasItem('false')
+            ->willThrow(new \InvalidArgumentException('foo'));
+
+        $cache
+            ->getItem('pgtIou')
+            ->willReturn($cacheItem);
+
+        $client = new Psr18Client($this->getHttpClientMock());
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
+
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
+
         $from = 'http://local/';
 
         $request = new ServerRequest('GET', $from);
@@ -510,12 +538,6 @@ class CasSpec extends ObjectBehavior
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true';
 
         $request = new ServerRequest('GET', $from);
-
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'invalid_xml' => 'true',
-        ];
 
         $response = $this
             ->serviceValidate($request, $parameters);
@@ -554,11 +576,17 @@ class CasSpec extends ObjectBehavior
             )
             ->shouldBeCalled();
 
-        $parameters = [
-            'service' => 'service',
-            'ticket' => 'ticket',
-            'invalid_ticket' => 'true',
-        ];
+        $this
+            ->isServiceValidateResponseValid(
+                $this
+                    ->serviceValidate($request, $parameters)
+                    ->getWrappedObject()
+            )
+            ->shouldReturn(false);
+
+        $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&with_pgt=true&pgt_valid=true';
+
+        $request = new ServerRequest('GET', $from);
 
         $this
             ->isServiceValidateResponseValid(
@@ -566,6 +594,38 @@ class CasSpec extends ObjectBehavior
                     ->serviceValidate($request, $parameters)
                     ->getWrappedObject()
             )
+            ->shouldReturn(true);
+
+        $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&with_pgt=true&pgt_valid=false';
+
+        $logger
+            ->error('Unable to validate the response because the pgtIou was not found.')
+            ->shouldBeCalled();
+
+        $request = new ServerRequest('GET', $from);
+
+        $response = $this
+            ->serviceValidate($request, $parameters)
+            ->getWrappedObject();
+
+        $this
+            ->isServiceValidateResponseValid($response)
+            ->shouldReturn(false);
+
+        $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&with_pgt=true&pgt_valid=false&pgt_is_not_string=true';
+
+        $logger
+            ->error('Unable to validate the response because the pgtIou was not found.')
+            ->shouldBeCalled();
+
+        $request = new ServerRequest('GET', $from);
+
+        $response = $this
+            ->serviceValidate($request, $parameters)
+            ->getWrappedObject();
+
+        $this
+            ->isServiceValidateResponseValid($response)
             ->shouldReturn(false);
     }
 
@@ -574,7 +634,7 @@ class CasSpec extends ObjectBehavior
         $this->shouldHaveType(Cas::class);
     }
 
-    public function let(LoggerInterface $logger, CacheItemPoolInterface $cache)
+    public function let(LoggerInterface $logger, CacheItemPoolInterface $cache, CacheItemInterface $cacheItem)
     {
         $properties = [
             'base_url' => 'http://local/cas',
@@ -607,6 +667,22 @@ class CasSpec extends ObjectBehavior
         $client = new Psr18Client($this->getHttpClientMock());
         $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
 
+        $cacheItem
+            ->set('pgtId')
+            ->willReturn($cacheItem);
+
+        $cacheItem
+            ->expiresAfter(300)
+            ->willReturn($cacheItem);
+
+        $cache
+            ->save($cacheItem)
+            ->willReturn(true);
+
+        $cache
+            ->getItem('pgtIou')
+            ->willReturn($cacheItem);
+
         $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
     }
 
@@ -622,7 +698,6 @@ class CasSpec extends ObjectBehavior
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
  <cas:authenticationSuccess>
   <cas:user>username</cas:user>
-  <cas:proxyGrantingTicket>PGTIOU-84678-8a9d...</cas:proxyGrantingTicket>
  </cas:authenticationSuccess>
 </cas:serviceResponse>
 EOF;
@@ -653,7 +728,6 @@ EOF;
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
  <cas:authenticationSuccess>
   <cas:user>username</cas:user>
-  <cas:proxyGrantingTicket>PGTIOU-84678-8a9d...</cas:proxyGrantingTicket>
  </cas:authenticationSuccess>
 </cas:serviceResponse>
 EOF;
@@ -693,6 +767,61 @@ EOF;
                             'Content-Type' => 'text/xml',
                         ],
                     ];
+
+                    break;
+                case 'http://local/cas/proxy?pgtIou=pgtIou&pgtId=pgtId':
+                    break;
+                case 'http://local/cas/serviceValidate?service=service&ticket=ticket&with_pgt=true&pgt_valid=true':
+                    $body = <<< 'EOF'
+<cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
+ <cas:authenticationSuccess>
+  <cas:user>username</cas:user>
+  <cas:proxyGrantingTicket>pgtIou</cas:proxyGrantingTicket>
+ </cas:authenticationSuccess>
+</cas:serviceResponse>
+EOF;
+
+                    $info = [
+                        'response_headers' => [
+                            'Content-Type' => 'text/xml',
+                        ],
+                    ];
+
+                    break;
+                case 'http://local/cas/serviceValidate?service=service&ticket=ticket&with_pgt=true&pgt_valid=false':
+                    $body = <<< 'EOF'
+<cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
+ <cas:authenticationSuccess>
+  <cas:user>username</cas:user>
+  <cas:proxyGrantingTicket>pgtIouInvalid</cas:proxyGrantingTicket>
+ </cas:authenticationSuccess>
+</cas:serviceResponse>
+EOF;
+
+                    $info = [
+                        'response_headers' => [
+                            'Content-Type' => 'text/xml',
+                        ],
+                    ];
+
+                    break;
+                case 'http://local/cas/serviceValidate?service=service&ticket=ticket&with_pgt=true&pgt_valid=false&pgt_is_not_string=true':
+                    $body = <<< 'EOF'
+<cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
+ <cas:authenticationSuccess>
+  <cas:user>username</cas:user>
+  <cas:proxyGrantingTicket>false</cas:proxyGrantingTicket>
+ </cas:authenticationSuccess>
+</cas:serviceResponse>
+EOF;
+
+                    $info = [
+                        'response_headers' => [
+                            'Content-Type' => 'text/xml',
+                        ],
+                    ];
+
+                    break;
             }
 
             return new MockResponse($body, $info);

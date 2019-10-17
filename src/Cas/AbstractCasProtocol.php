@@ -6,7 +6,6 @@ namespace drupol\psrcas\Cas;
 
 use drupol\psrcas\Utils\Uri;
 use Psr\Cache\CacheItemPoolInterface;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -180,18 +179,15 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
         if ([] !== $pgtIou = $xml->xpath('cas:authenticationSuccess//cas:proxyGrantingTicket')) {
             try {
                 $item = $this->getCache()->hasItem((string) $pgtIou[0]);
-            } catch (InvalidArgumentException $e) {
-                $item = null;
+            } catch (\Exception $e) {
+                $item = false;
             }
 
             if (false === $item) {
                 $this
                     ->getLogger()
                     ->error(
-                        'Unable to validate the response because the pgtIou was not found.',
-                        [
-                            'response' => (string) $response->getBody(),
-                        ]
+                        'Unable to validate the response because the pgtIou was not found.'
                     );
 
                 return false;

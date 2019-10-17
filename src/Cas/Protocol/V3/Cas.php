@@ -6,7 +6,6 @@ namespace drupol\psrcas\Cas\Protocol\V3;
 
 use drupol\psrcas\Cas\AbstractCasProtocol;
 use drupol\psrcas\Utils\Uri;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -22,26 +21,11 @@ final class Cas extends AbstractCasProtocol
     {
         $uri = $request->getUri();
 
-        if (!(Uri::hasParams($uri, 'pgtId', 'pgtIou'))) {
-            $this
-                ->getLogger()
-                ->debug(
-                    'CAS server just checked the proxy callback endpoint.',
-                    ['request' => $request, 'uri' => (string) $request->getUri()]
-                );
-
-            // Todo: Verify what is supposed to return this response.
-            return $this
-                ->getResponseFactory()
-                ->createResponse(200);
-        }
-
         if (Uri::hasParams($uri, 'pgtId') && !Uri::hasParams($uri, 'pgtIou')) {
             $this
                 ->getLogger()
                 ->debug(
-                    'Missing proxy callback parameter (pgtIou).',
-                    ['request' => $request, 'uri' => (string) $request->getUri()]
+                    'Missing proxy callback parameter (pgtIou).'
                 );
 
             // Todo: Verify what is supposed to return this response.
@@ -54,8 +38,20 @@ final class Cas extends AbstractCasProtocol
             $this
                 ->getLogger()
                 ->debug(
-                    'Missing proxy callback parameter (pgtId).',
-                    ['request' => $request, 'uri' => (string) $request->getUri()]
+                    'Missing proxy callback parameter (pgtId).'
+                );
+
+            // Todo: Verify what is supposed to return this response.
+            return $this
+                ->getResponseFactory()
+                ->createResponse(200);
+        }
+
+        if (!(Uri::hasParams($uri, 'pgtId', 'pgtIou'))) {
+            $this
+                ->getLogger()
+                ->debug(
+                    'CAS server just checked the proxy callback endpoint.'
                 );
 
             // Todo: Verify what is supposed to return this response.
@@ -70,7 +66,7 @@ final class Cas extends AbstractCasProtocol
 
         try {
             $cacheItem = $this->getCache()->getItem($pgtIou);
-        } catch (InvalidArgumentException $e) {
+        } catch (\Exception $e) {
             $this
                 ->getLogger()
                 ->error($e->getMessage(), ['exception' => $e]);
@@ -165,9 +161,7 @@ final class Cas extends AbstractCasProtocol
         ServerRequestInterface $request,
         array $parameters = []
     ): ?ResponseInterface {
-        if ([] === $parameters = $this->formatProtocolParameters($request, $parameters)) {
-            return null;
-        }
+        $parameters = $this->formatProtocolParameters($request, $parameters);
 
         return $this->validateCasRequest(
             $request

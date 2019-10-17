@@ -20,6 +20,21 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 class CasSpec extends ObjectBehavior
 {
+    /**
+     * @var \Psr\Cache\CacheItemPoolInterface
+     */
+    protected $cache;
+
+    /**
+     * @var \Psr\Cache\CacheItemInterface
+     */
+    protected $cacheItem;
+
+    /**
+     * @var \Psr\Log\LoggerInterface
+     */
+    protected $logger;
+
     public function it_can_be_constructed_without_base_url(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
@@ -177,9 +192,66 @@ class CasSpec extends ObjectBehavior
             ->shouldReturnAnInstanceOf(StreamFactoryInterface::class);
     }
 
-    public function it_can_handle_proxy_callback_request()
+    public function it_can_handle_proxy_callback_request(LoggerInterface $logger, CacheItemPoolInterface $cache, CacheItemInterface $cacheItem)
     {
         $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtIou=pgtIou&pgtId=pgtId');
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId');
+
+        $this
+            ->logger
+            ->debug('Missing proxy callback parameter (pgtIou).')
+            ->shouldBeCalled();
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtIou=pgtIou');
+
+        $this
+            ->logger
+            ->debug('Missing proxy callback parameter (pgtId).')
+            ->shouldBeCalled();
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxy');
+
+        $this
+            ->logger
+            ->debug('CAS server just checked the proxy callback endpoint.')
+            ->shouldBeCalled();
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId&pgtIou=pgtIou');
+
+        $this
+            ->logger
+            ->debug('Storing proxy callback parameters (pgtId and pgtIou)', ['pgtId' => 'pgtId', 'pgtIou' => 'pgtIou'])
+            ->shouldBeCalled();
+
+        $this->cache
+            ->getItem('false')
+            ->willThrow(new \InvalidArgumentException('foo'));
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+    }
+
+    public function it_can_handle_proxy_callback_request_and_detect_issue_with_pgtIou()
+    {
+        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId&pgtIou=false');
 
         $this
             ->handleProxyCallback($request)
@@ -636,6 +708,10 @@ class CasSpec extends ObjectBehavior
 
     public function let(LoggerInterface $logger, CacheItemPoolInterface $cache, CacheItemInterface $cacheItem)
     {
+        $this->logger = $logger;
+        $this->cache = $cache;
+        $this->cacheItem = $cacheItem;
+
         $properties = [
             'base_url' => 'http://local/cas',
             'protocol' => [

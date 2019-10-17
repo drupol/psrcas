@@ -194,6 +194,17 @@ class CasSpec extends ObjectBehavior
 
     public function it_can_handle_proxy_callback_request(LoggerInterface $logger, CacheItemPoolInterface $cache, CacheItemInterface $cacheItem)
     {
+        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId&pgtIou=false');
+
+        $this
+            ->handleProxyCallback($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $this
+            ->handleProxyCallback($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
+
         $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtIou=pgtIou&pgtId=pgtId');
 
         $this
@@ -263,20 +274,6 @@ class CasSpec extends ObjectBehavior
         $this->cache
             ->getItem('false')
             ->willThrow(new \InvalidArgumentException('foo'));
-
-        $this
-            ->handleProxyCallback($request)
-            ->shouldReturnAnInstanceOf(ResponseInterface::class);
-
-        $this
-            ->handleProxyCallback($request)
-            ->getStatusCode()
-            ->shouldReturn(200);
-    }
-
-    public function it_can_handle_proxy_callback_request_and_detect_issue_with_pgtIou()
-    {
-        $request = new ServerRequest('GET', 'http://local/cas/proxy?pgtId=pgtId&pgtIou=false');
 
         $this
             ->handleProxyCallback($request)

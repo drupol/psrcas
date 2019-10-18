@@ -155,84 +155,6 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     /**
      * {@inheritdoc}
      */
-    public function isServiceValidateResponseValid(ResponseInterface $response): bool
-    {
-        $xml = $this->parseResponse($response);
-
-        if (null === $xml) {
-            return false;
-        }
-
-        // If no <cas:authenticationSuccess> tag.
-        if ($xml->xpath('cas:authenticationSuccess') === []) {
-            $this
-                ->logger
-                ->error(
-                    'Invalid CAS response.',
-                    [
-                        'response' => (string) $response->getBody(),
-                    ]
-                );
-
-            return false;
-        }
-
-        if ([] !== $pgtIou = $xml->xpath('cas:authenticationSuccess//cas:proxyGrantingTicket')) {
-            try {
-                $item = $this->getCache()->hasItem((string) $pgtIou[0]);
-            } catch (\Exception $e) {
-                $item = false;
-            }
-
-            if (false === $item) {
-                $this
-                    ->getLogger()
-                    ->error(
-                        'Unable to validate the response because the pgtIou was not found.'
-                    );
-
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function parseProxyTicketResponse(ResponseInterface $response): ?string
-    {
-        $xml = $this->parseResponse($response);
-
-        if (null === $xml) {
-            return null;
-        }
-
-        // If no <cas:proxySuccess> tag.
-        if ($xml->xpath('cas:proxySuccess') === []) {
-            $this
-                ->logger
-                ->error(
-                    'Invalid CAS response.',
-                    [
-                        'response' => (string) $response->getBody(),
-                    ]
-                );
-
-            return null;
-        }
-
-        if ([] !== $pgt = $xml->xpath('cas:proxySuccess//cas:proxyTicket')) {
-            return (string) $pgt[0];
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function parseResponse(ResponseInterface $response): ?SimpleXMLElement
     {
         $parsed = null;
@@ -258,6 +180,88 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
         }
 
         return $parsed;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function validateProxyValidateResponse(?ResponseInterface $response): ?ResponseInterface
+    {
+        if (null === $response) {
+            return null;
+        }
+
+        $xml = $this->parseResponse($response);
+
+        if (null === $xml) {
+            return null;
+        }
+
+        // If no <cas:proxySuccess> tag.
+        if ($xml->xpath('cas:proxySuccess') === []) {
+            $this
+                ->logger
+                ->error(
+                    'Invalid CAS response.',
+                    [
+                        'response' => (string) $response->getBody(),
+                    ]
+                );
+
+            return null;
+        }
+
+        return $response;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function validateServiceValidateResponse(?ResponseInterface $response): ?ResponseInterface
+    {
+        if (null === $response) {
+            return null;
+        }
+
+        $xml = $this->parseResponse($response);
+
+        if (null === $xml) {
+            return null;
+        }
+
+        // If no <cas:authenticationSuccess> tag.
+        if ($xml->xpath('cas:authenticationSuccess') === []) {
+            $this
+                ->logger
+                ->error(
+                    'Invalid CAS response.',
+                    [
+                        'response' => (string) $response->getBody(),
+                    ]
+                );
+
+            return null;
+        }
+
+        if ([] !== $pgtIou = $xml->xpath('cas:authenticationSuccess//cas:proxyGrantingTicket')) {
+            try {
+                $item = $this->getCache()->hasItem((string) $pgtIou[0]);
+            } catch (\Exception $e) {
+                $item = false;
+            }
+
+            if (false === $item) {
+                $this
+                    ->getLogger()
+                    ->error(
+                        'Unable to validate the response because the pgtIou was not found.'
+                    );
+
+                return null;
+            }
+        }
+
+        return $response;
     }
 
     /**

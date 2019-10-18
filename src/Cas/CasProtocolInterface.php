@@ -82,13 +82,6 @@ interface CasProtocolInterface
     public function handleProxyCallback(ServerRequestInterface $request): ResponseInterface;
 
     /**
-     * @param \Psr\Http\Message\ResponseInterface $response
-     *
-     * @return bool
-     */
-    public function isServiceValidateResponseValid(ResponseInterface $response): bool;
-
-    /**
      * If not authenticated, redirect to CAS login.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request
@@ -109,13 +102,6 @@ interface CasProtocolInterface
      *   An HTTP response.
      */
     public function logout(ServerRequestInterface $request, array $parameters = []): ResponseInterface;
-
-    /**
-     * @param \Psr\Http\Message\ResponseInterface $response
-     *
-     * @return null|string
-     */
-    public function parseProxyTicketResponse(ResponseInterface $response): ?string;
 
     /**
      * @param \Psr\Http\Message\ResponseInterface $response
@@ -147,4 +133,18 @@ interface CasProtocolInterface
      * @return null|\Psr\Http\Message\ResponseInterface
      */
     public function requestServiceValidate(ServerRequestInterface $request, array $parameters): ?ResponseInterface;
+
+    /**
+     * @param \Psr\Http\Message\ResponseInterface $response
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    public function validateProxyValidateResponse(?ResponseInterface $response): ?ResponseInterface;
+
+    /**
+     * @param \Psr\Http\Message\ResponseInterface $response
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    public function validateServiceValidateResponse(?ResponseInterface $response): ?ResponseInterface;
 }

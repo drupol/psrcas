@@ -182,15 +182,17 @@ final class Cas extends AbstractCasProtocol
     {
         $parameters = $this->formatProtocolParameters($request, $parameters);
 
-        return $this->validateCasRequest(
-            $request
-                ->withUri(
-                    $this->get(
-                        $request->getUri(),
-                        'proxyValidate',
-                        $parameters
+        return $this->validateProxyValidateResponse(
+            $this->validateCasRequest(
+                $request
+                    ->withUri(
+                        $this->get(
+                            $request->getUri(),
+                            'proxyValidate',
+                            $parameters
+                        )
                     )
-                )
+            )
         );
     }
 
@@ -201,15 +203,17 @@ final class Cas extends AbstractCasProtocol
     {
         $parameters = $this->formatProtocolParameters($request, $parameters);
 
-        return $this->validateCasRequest(
-            $request
-                ->withUri(
-                    $this->get(
-                        $request->getUri(),
-                        'serviceValidate',
-                        $parameters
+        return $this->validateServiceValidateResponse(
+            $this->validateCasRequest(
+                $request
+                    ->withUri(
+                        $this->get(
+                            $request->getUri(),
+                            'serviceValidate',
+                            $parameters
+                        )
                     )
-                )
+            )
         );
     }
 }

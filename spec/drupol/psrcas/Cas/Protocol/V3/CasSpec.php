@@ -415,6 +415,57 @@ class CasSpec extends ObjectBehavior
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
     }
 
+    public function it_can_parse_a_proxy_request_response()
+    {
+        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt';
+
+        $request = new ServerRequest('GET', $url);
+
+        $response = $this
+            ->requestProxyTicket($request)
+            ->getWrappedObject();
+
+        $this
+            ->parseProxyTicketResponse($response)
+            ->shouldReturn('PT-214-A3OoEPNr4Q9kNNuYzmfN8azU31aDUsuW8nk380k7wDExT5PFJpxR1TrNI3q3VGzyDdi0DpZ1LKb8IhPKZKQvavW-8hnfexYjmLCx7qWNsLib1W-DCzzoLVTosAUFzP3XDn5dNzoNtxIXV9KSztF9fYhwHvU0');
+
+        $url .= '&invalid_xml=true';
+
+        $request = new ServerRequest('GET', $url);
+
+        $response = $this
+            ->requestProxyTicket($request)
+            ->getWrappedObject();
+
+        $this
+            ->parseProxyTicketResponse($response)
+            ->shouldReturn(null);
+
+        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true';
+
+        $request = new ServerRequest('GET', $url);
+
+        $response = $this
+            ->requestProxyTicket($request)
+            ->getWrappedObject();
+
+        $this
+            ->parseProxyTicketResponse($response)
+            ->shouldReturn(null);
+
+        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true&no_pgt=true';
+
+        $request = new ServerRequest('GET', $url);
+
+        $response = $this
+            ->requestProxyTicket($request)
+            ->getWrappedObject();
+
+        $this
+            ->parseProxyTicketResponse($response)
+            ->shouldReturn(null);
+    }
+
     public function it_can_renew_login()
     {
         $from = 'http://local/';
@@ -764,6 +815,13 @@ class CasSpec extends ObjectBehavior
                         'custom',
                     ],
                 ],
+                'proxy' => [
+                    'path' => '/proxy',
+                    'allowed_parameters' => [
+                        'targetService',
+                        'pgt',
+                    ],
+                ],
             ],
         ];
 
@@ -853,6 +911,7 @@ EOF;
                     $body = '';
 
                     break;
+                case 'http://local/cas/proxy?targetService=service&pgt=pgt&invalid_xml=true':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true':
                     $body = <<< 'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
@@ -915,6 +974,62 @@ EOF;
   <cas:user>username</cas:user>
   <cas:proxyGrantingTicket>false</cas:proxyGrantingTicket>
  </cas:authenticationSuccess>
+</cas:serviceResponse>
+EOF;
+
+                    $info = [
+                        'response_headers' => [
+                            'Content-Type' => 'text/xml',
+                        ],
+                    ];
+
+                    break;
+                case 'http://local/cas/proxy?targetService=service&pgt=pgt':
+                    $body = <<< 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<cas:serviceResponse xmlns:cas="https://ecas.ec.europa.eu/cas/schemas"
+                     server="ECAS MOCKUP version 4.6.0.20924 - 09/02/2016 - 14:37"
+                     date="2019-10-18T12:17:53.069+02:00" version="4.5">
+	<cas:proxySuccess>
+		<cas:proxyTicket>PT-214-A3OoEPNr4Q9kNNuYzmfN8azU31aDUsuW8nk380k7wDExT5PFJpxR1TrNI3q3VGzyDdi0DpZ1LKb8IhPKZKQvavW-8hnfexYjmLCx7qWNsLib1W-DCzzoLVTosAUFzP3XDn5dNzoNtxIXV9KSztF9fYhwHvU0</cas:proxyTicket>
+	</cas:proxySuccess>
+</cas:serviceResponse>
+EOF;
+
+                    $info = [
+                        'response_headers' => [
+                            'Content-Type' => 'text/xml',
+                        ],
+                    ];
+
+                    break;
+                case 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true':
+                    $body = <<< 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<cas:serviceResponse xmlns:cas="https://ecas.ec.europa.eu/cas/schemas"
+                     server="ECAS MOCKUP version 4.6.0.20924 - 09/02/2016 - 14:37"
+                     date="2019-10-18T12:17:53.069+02:00" version="4.5">
+	<cas:proxyFailure>
+        Foo.
+	</cas:proxyFailure>
+</cas:serviceResponse>
+EOF;
+
+                    $info = [
+                        'response_headers' => [
+                            'Content-Type' => 'text/xml',
+                        ],
+                    ];
+
+                    break;
+                case 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true&no_pgt=true':
+                    $body = <<< 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<cas:serviceResponse xmlns:cas="https://ecas.ec.europa.eu/cas/schemas"
+                     server="ECAS MOCKUP version 4.6.0.20924 - 09/02/2016 - 14:37"
+                     date="2019-10-18T12:17:53.069+02:00" version="4.5">
+	<cas:proxySuccess>
+	</cas:proxySuccess>
 </cas:serviceResponse>
 EOF;
 

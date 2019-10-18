@@ -90,12 +90,12 @@ class CasSpec extends ObjectBehavior
         ];
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->requestServiceValidate($request, $parameters)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
         $this
             ->isServiceValidateResponseValid(
-                $this->serviceValidate($request, $parameters)->getWrappedObject()
+                $this->requestServiceValidate($request, $parameters)->getWrappedObject()
             )
             ->shouldReturn(false);
     }
@@ -144,7 +144,7 @@ class CasSpec extends ObjectBehavior
         ];
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->requestServiceValidate($request, $parameters)
             ->shouldBeNull();
     }
 
@@ -525,11 +525,11 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket', ['Content-Type' => 'text/xml']);
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->getStatusCode()
             ->shouldReturn(200);
 
@@ -538,7 +538,7 @@ class CasSpec extends ObjectBehavior
             ->shouldNotBeCalled();
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404');
@@ -548,7 +548,7 @@ class CasSpec extends ObjectBehavior
             ->shouldBeCalled();
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldBeNull();
 
         $logger
@@ -558,7 +558,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true');
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldNotBeNull();
 
         $logger
@@ -568,13 +568,13 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true');
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=0');
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldBeNull();
 
         $logger
@@ -584,7 +584,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('POST', 'foo');
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldBeNull();
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_header=true';
@@ -592,7 +592,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true';
@@ -600,7 +600,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=0';
@@ -608,13 +608,13 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $this
-            ->serviceValidate($request)
+            ->requestServiceValidate($request)
             ->shouldBeNull();
 
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=false';
 
         $this
-            ->serviceValidate(new ServerRequest('GET', $from))
+            ->requestServiceValidate(new ServerRequest('GET', $from))
             ->shouldBeNull();
     }
 
@@ -682,13 +682,13 @@ class CasSpec extends ObjectBehavior
         ];
 
         $this
-            ->serviceValidate($request, $parameters)
+            ->requestServiceValidate($request, $parameters)
             ->shouldNotBeNull();
 
         $this
             ->isServiceValidateResponseValid(
                 $this
-                    ->serviceValidate($request, $parameters)
+                    ->requestServiceValidate($request, $parameters)
                     ->getWrappedObject()
             )
             ->shouldReturn(true);
@@ -698,7 +698,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $response = $this
-            ->serviceValidate($request, $parameters);
+            ->requestServiceValidate($request, $parameters);
 
         $response
             ->shouldBeAnInstanceOf(ResponseInterface::class);
@@ -710,7 +710,7 @@ class CasSpec extends ObjectBehavior
         $this
             ->isServiceValidateResponseValid(
                 $this
-                    ->serviceValidate($request, $parameters)
+                    ->requestServiceValidate($request, $parameters)
                     ->getWrappedObject()
             )
             ->shouldReturn(false);
@@ -720,7 +720,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $response = $this
-            ->serviceValidate($request, $parameters);
+            ->requestServiceValidate($request, $parameters);
 
         $response
             ->shouldBeAnInstanceOf(ResponseInterface::class);
@@ -737,7 +737,7 @@ class CasSpec extends ObjectBehavior
         $this
             ->isServiceValidateResponseValid(
                 $this
-                    ->serviceValidate($request, $parameters)
+                    ->requestServiceValidate($request, $parameters)
                     ->getWrappedObject()
             )
             ->shouldReturn(false);
@@ -749,7 +749,7 @@ class CasSpec extends ObjectBehavior
         $this
             ->isServiceValidateResponseValid(
                 $this
-                    ->serviceValidate($request, $parameters)
+                    ->requestServiceValidate($request, $parameters)
                     ->getWrappedObject()
             )
             ->shouldReturn(true);
@@ -763,7 +763,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $response = $this
-            ->serviceValidate($request, $parameters)
+            ->requestServiceValidate($request, $parameters)
             ->getWrappedObject();
 
         $this
@@ -779,7 +779,7 @@ class CasSpec extends ObjectBehavior
         $request = new ServerRequest('GET', $from);
 
         $response = $this
-            ->serviceValidate($request, $parameters)
+            ->requestServiceValidate($request, $parameters)
             ->getWrappedObject();
 
         $this

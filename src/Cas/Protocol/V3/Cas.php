@@ -178,7 +178,7 @@ final class Cas extends AbstractCasProtocol
     /**
      * {@inheritdoc}
      */
-    public function serviceValidate(
+    public function requestServiceValidate(
         ServerRequestInterface $request,
         array $parameters = []
     ): ?ResponseInterface {

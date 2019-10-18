@@ -4,16 +4,28 @@ declare(strict_types=1);
 
 namespace drupol\psrcas\Cas;
 
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
+use Psr\Log\LoggerInterface;
+use SimpleXMLElement;
 
 /**
  * Interface CasProtocolInterface.
  */
 interface CasProtocolInterface
 {
+    /**
+     * Get the cache.
+     *
+     * @return \Psr\Cache\CacheItemPoolInterface
+     */
+    public function getCache(): CacheItemPoolInterface;
+
     /**
      * Get the http client.
      *
@@ -23,12 +35,33 @@ interface CasProtocolInterface
     public function getHttpClient(): ClientInterface;
 
     /**
+     * Get the logger.
+     *
+     * @return \Psr\Log\LoggerInterface
+     */
+    public function getLogger(): LoggerInterface;
+
+    /**
      * Get the library properties.
      *
      * @return array
      *   The properties.
      */
     public function getProperties(): array;
+
+    /**
+     * Get the response factory.
+     *
+     * @return \Psr\Http\Message\ResponseFactoryInterface
+     */
+    public function getResponseFactory(): ResponseFactoryInterface;
+
+    /**
+     * Get the stream factory.
+     *
+     * @return \Psr\Http\Message\StreamFactoryInterface
+     */
+    public function getStreamFactory(): StreamFactoryInterface;
 
     /**
      * Get the URI factory.
@@ -64,10 +97,7 @@ interface CasProtocolInterface
      * @return null|\Psr\Http\Message\ResponseInterface
      *   An HTTP response or null.
      */
-    public function login(
-        ServerRequestInterface $request,
-        array $parameters = []
-    ): ?ResponseInterface;
+    public function login(ServerRequestInterface $request, array $parameters = []): ?ResponseInterface;
 
     /**
      * Redirect to CAS logout.
@@ -78,10 +108,7 @@ interface CasProtocolInterface
      * @return \Psr\Http\Message\ResponseInterface
      *   An HTTP response.
      */
-    public function logout(
-        ServerRequestInterface $request,
-        array $parameters = []
-    ): ResponseInterface;
+    public function logout(ServerRequestInterface $request, array $parameters = []): ResponseInterface;
 
     /**
      * @param \Psr\Http\Message\ResponseInterface $response
@@ -95,7 +122,7 @@ interface CasProtocolInterface
      *
      * @return null|\SimpleXMLElement
      */
-    public function parseResponse(ResponseInterface $response): ?\SimpleXMLElement;
+    public function parseResponse(ResponseInterface $response): ?SimpleXMLElement;
 
     /**
      * @param \Psr\Http\Message\ServerRequestInterface $request
@@ -111,8 +138,5 @@ interface CasProtocolInterface
      *
      * @return null|\Psr\Http\Message\ResponseInterface
      */
-    public function serviceValidate(
-        ServerRequestInterface $request,
-        array $parameters
-    ): ?ResponseInterface;
+    public function requestServiceValidate(ServerRequestInterface $request, array $parameters): ?ResponseInterface;
 }

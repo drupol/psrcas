@@ -153,17 +153,29 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     }
 
     /**
+     * @param \Psr\Http\Message\ResponseInterface $response
+     *
+     * @return null|\SimpleXMLElement
+     */
+    public function parseProxyTicketResponse(ResponseInterface $response): ?SimpleXMLElement
+    {
+        return $this->parseResponse($response, '//cas:proxySuccess');
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function parseResponse(ResponseInterface $response): ?SimpleXMLElement
+    public function parseResponse(ResponseInterface $response, string $xpath = null): ?SimpleXMLElement
     {
         $parsed = null;
         $contentType = \current($response->getHeader('Content-Type'));
 
         if (0 === \mb_strpos($contentType, 'text/xml')) {
+            $body = $response->getBody();
+
             try {
                 $parsed = new SimpleXMLElement(
-                    (string) $response->getBody(),
+                    (string) $body,
                     0,
                     false,
                     'cas',
@@ -174,8 +186,24 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
                     ->logger
                     ->error(
                         $e->getMessage(),
-                        ['response' => $response->getBody()]
+                        ['response' => $body]
                     );
+            }
+
+            if ((null !== $parsed) && (null !== $xpath)) {
+                try {
+                    $parsedXml = $parsed->xpath($xpath);
+                } catch (\Exception $e) {
+                    $parsedXml = [];
+                }
+
+                if ([] === $parsedXml || false === $parsedXml) {
+                    return null;
+                }
+
+                if (false !== $parsedXmlElement = \current($parsedXml)) {
+                    $parsed = $parsedXmlElement;
+                }
             }
         }
 
@@ -191,23 +219,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             return null;
         }
 
-        $xml = $this->parseResponse($response);
-
-        if (null === $xml) {
-            return null;
-        }
-
-        // If no <cas:proxySuccess> tag.
-        if ($xml->xpath('cas:proxySuccess') === []) {
-            $this
-                ->logger
-                ->error(
-                    'Invalid CAS response.',
-                    [
-                        'response' => (string) $response->getBody(),
-                    ]
-                );
-
+        if (null === $this->parseResponse($response, '//cas:authenticationSuccess')) {
             return null;
         }
 
@@ -223,27 +235,13 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             return null;
         }
 
-        $xml = $this->parseResponse($response);
-
-        if (null === $xml) {
+        if (null === $this->parseResponse($response, '//cas:authenticationSuccess')) {
             return null;
         }
 
-        // If no <cas:authenticationSuccess> tag.
-        if ($xml->xpath('cas:authenticationSuccess') === []) {
-            $this
-                ->logger
-                ->error(
-                    'Invalid CAS response.',
-                    [
-                        'response' => (string) $response->getBody(),
-                    ]
-                );
+        $pgtIou = $this->parseResponse($response, '//cas:authenticationSuccess//cas:proxyGrantingTicket');
 
-            return null;
-        }
-
-        if ([] !== $pgtIou = $xml->xpath('cas:authenticationSuccess//cas:proxyGrantingTicket')) {
+        if (null !== $pgtIou) {
             try {
                 $item = $this->getCache()->hasItem((string) $pgtIou[0]);
             } catch (\Exception $e) {
@@ -259,6 +257,27 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
 
                 return null;
             }
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    protected function doCasServerRequest(ServerRequestInterface $request): ?ResponseInterface
+    {
+        try {
+            $response = $this->getHttpClient()->sendRequest($request);
+        } catch (ClientExceptionInterface $e) {
+            $this->logger->error($e->getMessage());
+            $response = null;
+        }
+
+        if (null === $response) {
+            return null;
         }
 
         return $response;
@@ -374,19 +393,12 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     }
 
     /**
-     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param null|\Psr\Http\Message\ResponseInterface $response
      *
      * @return null|\Psr\Http\Message\ResponseInterface
      */
-    protected function validateCasRequest(ServerRequestInterface $request): ?ResponseInterface
+    protected function validateCasServerRequest(?ResponseInterface $response): ?ResponseInterface
     {
-        try {
-            $response = $this->getHttpClient()->sendRequest($request);
-        } catch (ClientExceptionInterface $e) {
-            $this->logger->error($e->getMessage());
-            $response = null;
-        }
-
         if (null === $response) {
             return null;
         }
@@ -396,9 +408,8 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
                 ->logger
                 ->error(
                     \sprintf(
-                        'Invalid status code (%s) for request URI (%s).',
-                        $response->getStatusCode(),
-                        $request->getUri()
+                        'Invalid status code (%s) for request URI.',
+                        $response->getStatusCode()
                     )
                 );
 
@@ -411,6 +422,40 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             $this
                 ->logger
                 ->error('Unable to find the "Content-Type" header in the response.');
+
+            return null;
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param null|\Psr\Http\Message\ResponseInterface $response
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    protected function validateProxyTicketRequest(?ResponseInterface $response): ?ResponseInterface
+    {
+        if (null === $response) {
+            return null;
+        }
+
+        $xml = $this->parseResponse($response);
+
+        if (null === $xml) {
+            return null;
+        }
+
+        // If no <cas:proxySuccess> tag.
+        if ($xml->xpath('cas:proxySuccess') === []) {
+            $this
+                ->logger
+                ->error(
+                    'Invalid CAS response.',
+                    [
+                        'response' => (string) $response->getBody(),
+                    ]
+                );
 
             return null;
         }

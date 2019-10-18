@@ -415,13 +415,9 @@ class CasSpec extends ObjectBehavior
 
         $request = new ServerRequest('GET', $url);
 
-        $response = $this
-            ->requestProxyTicket($request)
-            ->getWrappedObject();
-
         $this
-            ->validateProxyValidateResponse($response)
-            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+            ->requestProxyTicket($request)
+            ->shouldBeAnInstanceOf(ResponseInterface::class);
 
         $url .= '&invalid_xml=true';
 
@@ -448,6 +444,29 @@ class CasSpec extends ObjectBehavior
             ->shouldReturn(null);
 
         $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&missing_headers=true';
+
+        $request = new ServerRequest('GET', $url);
+
+        $this
+            ->requestProxyTicket($request)
+            ->shouldBeNull();
+    }
+
+    public function it_can_parse_the_proxy_ticket_response()
+    {
+        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt';
+
+        $request = new ServerRequest('GET', $url);
+
+        $response = $this
+            ->requestProxyTicket($request)
+            ->getWrappedObject();
+
+        $this
+            ->parseProxyTicketResponse($response)
+            ->shouldNotBeNull();
+
+        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&invalid_xml=true';
 
         $request = new ServerRequest('GET', $url);
 
@@ -494,6 +513,7 @@ class CasSpec extends ObjectBehavior
                         'ticket',
                         'http_code',
                         'invalid_xml',
+                        'unrelated_xml',
                     ],
                 ],
             ],
@@ -509,6 +529,14 @@ class CasSpec extends ObjectBehavior
         $this
             ->requestProxyValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $response = $this
+            ->requestProxyValidate($request)
+            ->getWrappedObject();
+
+        $this
+            ->parseResponse($response, 'foo bar')
+            ->shouldBeNull();
 
         $this
             ->requestProxyValidate($request)
@@ -567,13 +595,17 @@ class CasSpec extends ObjectBehavior
 
         $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=0';
 
-        $request = new ServerRequest('GET', $from);
-
         $this
-            ->requestProxyValidate($request)
+            ->requestProxyValidate(new ServerRequest('GET', $from))
             ->shouldBeNull();
 
         $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=false';
+
+        $this
+            ->requestProxyValidate(new ServerRequest('GET', $from))
+            ->shouldBeNull();
+
+        $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&unrelated_xml=true';
 
         $this
             ->requestProxyValidate(new ServerRequest('GET', $from))
@@ -920,27 +952,10 @@ EOF;
                     ];
 
                     break;
-                case 'http://local/cas/proxyValidate?service=service&ticket=ticket':
-                    $body = <<< 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<cas:serviceResponse xmlns:cas="https://ecas.ec.europa.eu/cas/schemas"
-                     server="ECAS MOCKUP version 4.6.0.20924 - 09/02/2016 - 14:37"
-                     date="2019-10-18T12:17:53.069+02:00" version="4.5">
-	<cas:proxySuccess>
-		<cas:proxyTicket>PT-214-A3OoEPNr4Q9kNNuYzmfN8azU31aDUsuW8nk380k7wDExT5PFJpxR1TrNI3q3VGzyDdi0DpZ1LKb8IhPKZKQvavW-8hnfexYjmLCx7qWNsLib1W-DCzzoLVTosAUFzP3XDn5dNzoNtxIXV9KSztF9fYhwHvU0</cas:proxyTicket>
-	</cas:proxySuccess>
-</cas:serviceResponse>
-EOF;
-
-                    $info = [
-                        'response_headers' => [
-                            'Content-Type' => 'text/xml',
-                        ],
-                    ];
-
-                    break;
-                case 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket':
+                case 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true':
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket':
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=true':
                     $body = <<< 'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
  <cas:authenticationSuccess>
@@ -981,7 +996,8 @@ EOF;
                     ];
 
                     break;
-                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=true':
+                case 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true&no_pgt=true':
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&unrelated_xml=true':
                     $body = <<< 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <cas:serviceResponse xmlns:cas="https://ecas.ec.europa.eu/cas/schemas"
@@ -1079,24 +1095,6 @@ EOF;
 	<cas:proxyFailure>
         Foo.
 	</cas:proxyFailure>
-</cas:serviceResponse>
-EOF;
-
-                    $info = [
-                        'response_headers' => [
-                            'Content-Type' => 'text/xml',
-                        ],
-                    ];
-
-                    break;
-                case 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true&no_pgt=true':
-                    $body = <<< 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<cas:serviceResponse xmlns:cas="https://ecas.ec.europa.eu/cas/schemas"
-                     server="ECAS MOCKUP version 4.6.0.20924 - 09/02/2016 - 14:37"
-                     date="2019-10-18T12:17:53.069+02:00" version="4.5">
-	<cas:proxySuccess>
-	</cas:proxySuccess>
 </cas:serviceResponse>
 EOF;
 

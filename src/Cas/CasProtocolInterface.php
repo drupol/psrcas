@@ -138,5 +138,13 @@ interface CasProtocolInterface
      *
      * @return null|\Psr\Http\Message\ResponseInterface
      */
+    public function requestProxyValidate(ServerRequestInterface $request, array $parameters = []): ?ResponseInterface;
+
+    /**
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param array $parameters
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
     public function requestServiceValidate(ServerRequestInterface $request, array $parameters): ?ResponseInterface;
 }

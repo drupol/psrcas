@@ -178,10 +178,27 @@ final class Cas extends AbstractCasProtocol
     /**
      * {@inheritdoc}
      */
-    public function requestServiceValidate(
-        ServerRequestInterface $request,
-        array $parameters = []
-    ): ?ResponseInterface {
+    public function requestProxyValidate(ServerRequestInterface $request, array $parameters = []): ?ResponseInterface
+    {
+        $parameters = $this->formatProtocolParameters($request, $parameters);
+
+        return $this->validateCasRequest(
+            $request
+                ->withUri(
+                    $this->get(
+                        $request->getUri(),
+                        'proxyValidate',
+                        $parameters
+                    )
+                )
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function requestServiceValidate(ServerRequestInterface $request, array $parameters = []): ?ResponseInterface
+    {
         $parameters = $this->formatProtocolParameters($request, $parameters);
 
         return $this->validateCasRequest(

@@ -86,9 +86,24 @@ interface CasProtocolInterface
     /**
      * @param \Psr\Http\Message\ResponseInterface $response
      *
+     * @return null|string
+     */
+    public function parseProxyTicketResponse(ResponseInterface $response): ?string;
+
+    /**
+     * @param \Psr\Http\Message\ResponseInterface $response
+     *
      * @return null|\SimpleXMLElement
      */
     public function parseResponse(ResponseInterface $response): ?\SimpleXMLElement;
+
+    /**
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     * @param array $parameters
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    public function requestProxyTicket(ServerRequestInterface $request, array $parameters = []): ?ResponseInterface;
 
     /**
      * @param \Psr\Http\Message\ServerRequestInterface $request

@@ -15,6 +15,7 @@ use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerInterface;
+use SimpleXMLElement;
 
 /**
  * Class AbstractCasProtocol.
@@ -200,14 +201,46 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     /**
      * {@inheritdoc}
      */
-    public function parseResponse(ResponseInterface $response): ?\SimpleXMLElement
+    public function parseProxyTicketResponse(ResponseInterface $response): ?string
+    {
+        $xml = $this->parseResponse($response);
+
+        if (null === $xml) {
+            return null;
+        }
+
+        // If no <cas:authenticationSuccess> tag.
+        if ($xml->xpath('cas:proxySuccess') === []) {
+            $this
+                ->logger
+                ->error(
+                    'Invalid CAS response.',
+                    [
+                        'response' => (string) $response->getBody(),
+                    ]
+                );
+
+            return null;
+        }
+
+        if ([] !== $pgt = $xml->xpath('cas:proxySuccess//cas:proxyTicket')) {
+            return (string) $pgt[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function parseResponse(ResponseInterface $response): ?SimpleXMLElement
     {
         $parsed = null;
         $contentType = \current($response->getHeader('Content-Type'));
 
         if (0 === \mb_strpos($contentType, 'text/xml')) {
             try {
-                $parsed = new \SimpleXMLElement(
+                $parsed = new SimpleXMLElement(
                     (string) $response->getBody(),
                     0,
                     false,
@@ -297,7 +330,6 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     protected function get(UriInterface $from, string $name, array $query = []): UriInterface
     {
         $properties = $this->getProperties();
-        $name = \mb_strtolower($name);
 
         $properties += [
             'protocol' => [

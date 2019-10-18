@@ -67,7 +67,7 @@ class CasSpec extends ObjectBehavior
         $properties = [
             'base_url' => 'http://local/cas',
             'protocol' => [
-                'servicevalidate' => [
+                'serviceValidate' => [
                     'path' => '/serviceValidate',
                     'allowed_parameters' => [
                         'ticket',
@@ -121,7 +121,7 @@ class CasSpec extends ObjectBehavior
         $properties = [
             'base_url' => '',
             'protocol' => [
-                'servicevalidate' => [
+                'serviceValidate' => [
                     'path' => '\?&!@# // \\ http:// foo bar',
                 ],
             ],
@@ -446,7 +446,7 @@ class CasSpec extends ObjectBehavior
         $properties = [
             'base_url' => '',
             'protocol' => [
-                'servicevalidate' => [
+                'serviceValidate' => [
                     'path' => 'http://local/cas/serviceValidate',
                     'allowed_parameters' => [
                         'service',
@@ -564,7 +564,7 @@ class CasSpec extends ObjectBehavior
         $properties = [
             'base_url' => '',
             'protocol' => [
-                'servicevalidate' => [
+                'serviceValidate' => [
                     'path' => 'http://local/cas/serviceValidate',
                     'allowed_parameters' => [
                         'service',
@@ -756,7 +756,7 @@ class CasSpec extends ObjectBehavior
                         'custom',
                     ],
                 ],
-                'servicevalidate' => [
+                'serviceValidate' => [
                     'path' => '/serviceValidate',
                     'allowed_parameters' => [
                         'ticket',

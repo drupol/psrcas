@@ -238,10 +238,6 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
         $parsed = null;
         $contentType = \current($response->getHeader('Content-Type'));
 
-        if (false === $contentType) {
-            return null;
-        }
-
         if (0 === \mb_strpos($contentType, 'text/xml')) {
             try {
                 $parsed = new SimpleXMLElement(

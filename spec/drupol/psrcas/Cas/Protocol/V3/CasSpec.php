@@ -500,6 +500,124 @@ class CasSpec extends ObjectBehavior
             ->shouldBeNull();
     }
 
+    public function it_can_validate_a_proxy_ticket(LoggerInterface $logger, CacheItemPoolInterface $cache)
+    {
+        $properties = [
+            'base_url' => '',
+            'protocol' => [
+                'proxyValidate' => [
+                    'path' => 'http://local/cas/proxyValidate',
+                    'allowed_parameters' => [
+                        'service',
+                        'ticket',
+                        'http_code',
+                        'invalid_xml',
+                    ],
+                ],
+            ],
+        ];
+
+        $client = new Psr18Client($this->getHttpClientMock());
+        $uriFactory = $responseFactory = $streamFactory = new Psr17Factory();
+
+        $this->beConstructedWith($properties, $client, $uriFactory, $logger, $responseFactory, $streamFactory, $cache);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket', ['Content-Type' => 'text/xml']);
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $this
+            ->requestProxyValidate($request)
+            ->getStatusCode()
+            ->shouldReturn(200);
+
+        $logger
+            ->error('')
+            ->shouldNotBeCalled();
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket&http_code=404');
+
+        $logger
+            ->error('Invalid status code (404) for request URI (http://local/cas/proxyValidate?service=service&ticket=ticket&http_code=404).')
+            ->shouldBeCalled();
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldBeNull();
+
+        $logger
+            ->error('Unable to find the "Content-Type" header in the response.')
+            ->shouldBeCalled();
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket&invalid_xml=true');
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldNotBeNull();
+
+        $logger
+            ->error('Invalid status code (404) for request URI (http://local/cas/proxyValidate?service=service&ticket=ticket&http_code=404).')
+            ->shouldBeCalled();
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=true');
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldReturnAnInstanceOf(ResponseInterface::class);
+
+        $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=0');
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldBeNull();
+
+        $logger
+            ->error('Unable to find the "Content-Type" header in the response.')
+            ->shouldBeCalled();
+
+        $request = new ServerRequest('POST', 'foo');
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldBeNull();
+
+        $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&invalid_header=true';
+
+        $request = new ServerRequest('GET', $from);
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldBeAnInstanceOf(ResponseInterface::class);
+
+        $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=true';
+
+        $request = new ServerRequest('GET', $from);
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldBeAnInstanceOf(ResponseInterface::class);
+
+        $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=0';
+
+        $request = new ServerRequest('GET', $from);
+
+        $this
+            ->requestProxyValidate($request)
+            ->shouldBeNull();
+
+        $from = 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=false';
+
+        $this
+            ->requestProxyValidate(new ServerRequest('GET', $from))
+            ->shouldBeNull();
+    }
+
     public function it_can_validate_a_service_ticket(LoggerInterface $logger, CacheItemPoolInterface $cache)
     {
         $properties = [
@@ -862,6 +980,7 @@ class CasSpec extends ObjectBehavior
             $info = [];
 
             switch ($url) {
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&invalid_header=true':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_header=true':
                     $body = <<< 'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
@@ -892,6 +1011,7 @@ EOF;
                     ];
 
                     break;
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket':
                     $body = <<< 'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
@@ -907,8 +1027,9 @@ EOF;
                     ];
 
                     break;
-                case 'http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404':
-                    $body = '';
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&http_code=404':
+                    case 'http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404':
+                        $body = '';
                     $info = [
                         'http_code' => 404,
                     ];
@@ -921,6 +1042,7 @@ EOF;
                     break;
                 case 'http://local/cas/proxy?targetService=service&pgt=pgt&invalid_xml=true':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true':
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&invalid_xml=true':
                     $body = <<< 'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
 EOF;
@@ -931,6 +1053,7 @@ EOF;
                     ];
 
                     break;
+                case 'http://local/cas/proxyValidate?service=service&ticket=ticket&renew=true':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket&renew=true':
                     $info = [
                         'response_headers' => [

@@ -209,7 +209,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             return null;
         }
 
-        // If no <cas:authenticationSuccess> tag.
+        // If no <cas:proxySuccess> tag.
         if ($xml->xpath('cas:proxySuccess') === []) {
             $this
                 ->logger

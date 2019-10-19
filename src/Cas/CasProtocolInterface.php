@@ -135,6 +135,13 @@ interface CasProtocolInterface
     public function requestServiceValidate(ServerRequestInterface $request, array $parameters): ?ResponseInterface;
 
     /**
+     * @param null|\Psr\Http\Message\ResponseInterface $response
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    public function validateProxyTicketResponse(?ResponseInterface $response): ?ResponseInterface;
+
+    /**
      * @param \Psr\Http\Message\ResponseInterface $response
      *
      * @return null|\Psr\Http\Message\ResponseInterface

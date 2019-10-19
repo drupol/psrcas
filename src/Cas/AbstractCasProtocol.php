@@ -178,7 +178,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
         }
 
         if (0 === \mb_strpos($contentType, 'text/xml')) {
-            libxml_use_internal_errors(true);
+            \libxml_use_internal_errors(true);
 
             $parsed = \simplexml_load_string(
                 (string) $response->getBody(),
@@ -200,7 +200,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     /**
      * {@inheritdoc}
      */
-    public function validateProxyTicketRequest(?ResponseInterface $response): ?ResponseInterface
+    public function validateProxyTicketResponse(?ResponseInterface $response): ?ResponseInterface
     {
         if (null === $response) {
             return null;
@@ -412,7 +412,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
      *
      * @return null|\Psr\Http\Message\ResponseInterface
      */
-    protected function validateCasServerRequest(?ResponseInterface $response): ?ResponseInterface
+    protected function validateCasServerResponse(?ResponseInterface $response): ?ResponseInterface
     {
         if (null === $response) {
             return null;

@@ -111,7 +111,7 @@ class CasSpec extends ObjectBehavior
             ->withBody((new Psr17Factory())->createStream('error'));
 
         $this
-            ->validateProxyTicketRequest($response)
+            ->validateProxyTicketResponse($response)
             ->shouldBeNull();
 
         $response = (new Response(200))
@@ -119,7 +119,7 @@ class CasSpec extends ObjectBehavior
             ->withBody((new Psr17Factory())->createStream('error'));
 
         $this
-            ->validateProxyTicketRequest($response)
+            ->validateProxyTicketResponse($response)
             ->shouldBeNull();
 
         $this

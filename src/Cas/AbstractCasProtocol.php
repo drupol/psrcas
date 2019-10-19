@@ -153,9 +153,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     }
 
     /**
-     * @param \Psr\Http\Message\ResponseInterface $response
-     *
-     * @return null|\SimpleXMLElement
+     * {@inheritdoc}
      */
     public function parseProxyTicketResponse(ResponseInterface $response): ?SimpleXMLElement
     {
@@ -180,19 +178,18 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
         }
 
         if (0 === \mb_strpos($contentType, 'text/xml')) {
-            try {
-                $parsed = \simplexml_load_string(
-                    (string) $response->getBody(),
-                    'SimpleXMLElement',
-                    \LIBXML_NOCDATA | \LIBXML_NOBLANKS,
-                    'cas',
-                    true
-                );
-            } catch (\Exception $e) {
-                $parsed = false;
-            }
+            libxml_use_internal_errors(true);
+
+            $parsed = \simplexml_load_string(
+                (string) $response->getBody(),
+                'SimpleXMLElement',
+                \LIBXML_NOCDATA | \LIBXML_NOBLANKS,
+                'cas',
+                true
+            );
 
             if (false === $parsed) {
+                // todo: Log errors from libxml_get_errors().
                 return null;
             }
         }
@@ -201,9 +198,7 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
     }
 
     /**
-     * @param null|\Psr\Http\Message\ResponseInterface $response
-     *
-     * @return null|\Psr\Http\Message\ResponseInterface
+     * {@inheritdoc}
      */
     public function validateProxyTicketRequest(?ResponseInterface $response): ?ResponseInterface
     {

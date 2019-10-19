@@ -6,6 +6,7 @@ namespace spec\drupol\psrcas\Cas\Protocol\V3;
 
 use drupol\psrcas\Cas\Protocol\V3\Cas;
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7\Response;
 use Nyholm\Psr7\ServerRequest;
 use PhpSpec\ObjectBehavior;
 use Psr\Cache\CacheItemInterface;
@@ -91,6 +92,38 @@ class CasSpec extends ObjectBehavior
 
         $this
             ->requestServiceValidate($request, $parameters)
+            ->shouldBeNull();
+    }
+
+    public function it_can_detect_invalid_xml_in_the_response()
+    {
+        $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true');
+
+        $this
+            ->validateServiceValidateResponse(
+                $this
+                    ->requestServiceValidate($request)
+                    ->getWrappedObject()
+            )
+            ->shouldBeNull();
+
+        $response = (new Response(200))
+            ->withBody((new Psr17Factory())->createStream('error'));
+
+        $this
+            ->validateProxyTicketRequest($response)
+            ->shouldBeNull();
+
+        $response = (new Response(200))
+            ->withHeader('Content-Type', 'text/xml')
+            ->withBody((new Psr17Factory())->createStream('error'));
+
+        $this
+            ->validateProxyTicketRequest($response)
+            ->shouldBeNull();
+
+        $this
+            ->parseProxyTicketResponse($response)
             ->shouldBeNull();
     }
 
@@ -419,18 +452,6 @@ class CasSpec extends ObjectBehavior
             ->requestProxyTicket($request)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
-        $url .= '&invalid_xml=true';
-
-        $request = new ServerRequest('GET', $url);
-
-        $response = $this
-            ->requestProxyTicket($request)
-            ->getWrappedObject();
-
-        $this
-            ->validateProxyValidateResponse($response)
-            ->shouldReturn(null);
-
         $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&proxy_failure=true';
 
         $request = new ServerRequest('GET', $url);
@@ -466,7 +487,7 @@ class CasSpec extends ObjectBehavior
             ->parseProxyTicketResponse($response)
             ->shouldNotBeNull();
 
-        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&invalid_xml=true';
+        $url = 'http://local/cas/proxy?targetService=service&pgt=pgt&unrelated_xml';
 
         $request = new ServerRequest('GET', $url);
 
@@ -530,14 +551,6 @@ class CasSpec extends ObjectBehavior
             ->requestProxyValidate($request)
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
-        $response = $this
-            ->requestProxyValidate($request)
-            ->getWrappedObject();
-
-        $this
-            ->parseResponse($response, 'foo bar')
-            ->shouldBeNull();
-
         $this
             ->requestProxyValidate($request)
             ->getStatusCode()
@@ -548,12 +561,6 @@ class CasSpec extends ObjectBehavior
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket&http_code=404');
-
-        $this
-            ->requestProxyValidate($request)
-            ->shouldBeNull();
-
-        $request = new ServerRequest('GET', 'http://local/cas/proxyValidate?service=service&ticket=ticket&invalid_xml=true');
 
         $this
             ->requestProxyValidate($request)
@@ -650,12 +657,6 @@ class CasSpec extends ObjectBehavior
             ->shouldReturnAnInstanceOf(ResponseInterface::class);
 
         $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&http_code=404');
-
-        $this
-            ->requestServiceValidate($request)
-            ->shouldBeNull();
-
-        $request = new ServerRequest('GET', 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true');
 
         $this
             ->requestServiceValidate($request)
@@ -777,27 +778,11 @@ class CasSpec extends ObjectBehavior
             ->requestServiceValidate($request, $parameters)
             ->shouldBeAnInstanceOf(ResponseInterface::class);
 
-        $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_xml=true';
-
-        $request = new ServerRequest('GET', $from);
-
-        $response = $this
-            ->requestServiceValidate($request, $parameters)
-            ->shouldBeNull();
-
-        $this
-            ->validateServiceValidateResponse(
-                $this
-                    ->requestServiceValidate($request, $parameters)
-                    ->getWrappedObject()
-            )
-            ->shouldBeNull();
-
         $from = 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_ticket=true';
 
         $request = new ServerRequest('GET', $from);
 
-        $response = $this
+        $this
             ->requestServiceValidate($request, $parameters)
             ->shouldBeNull();
 
@@ -937,6 +922,7 @@ EOF;
                     ];
 
                     break;
+                case 'http://local/cas/proxy?targetService=service&pgt=pgt&unrelated_xml':
                 case 'http://local/cas/serviceValidate?service=service&ticket=ticket&invalid_ticket=true':
                     $body = <<<'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">

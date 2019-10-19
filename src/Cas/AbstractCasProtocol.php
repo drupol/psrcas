@@ -159,7 +159,11 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
      */
     public function parseProxyTicketResponse(ResponseInterface $response): ?SimpleXMLElement
     {
-        return $this->parseResponse($response, '//cas:proxySuccess');
+        if (null !== $parsedXml = $this->parseResponse($response)) {
+            return $parsedXml->proxySuccess;
+        }
+
+        return null;
     }
 
     /**
@@ -170,44 +174,52 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
         $parsed = null;
         $contentType = \current($response->getHeader('Content-Type'));
 
-        if (0 === \mb_strpos($contentType, 'text/xml')) {
-            $body = $response->getBody();
+        if (false === $contentType) {
+            // Todo: log error.
+            return null;
+        }
 
+        if (0 === \mb_strpos($contentType, 'text/xml')) {
             try {
-                $parsed = new SimpleXMLElement(
-                    (string) $body,
-                    0,
-                    false,
+                $parsed = \simplexml_load_string(
+                    (string) $response->getBody(),
+                    'SimpleXMLElement',
+                    \LIBXML_NOCDATA | \LIBXML_NOBLANKS,
                     'cas',
                     true
                 );
             } catch (\Exception $e) {
-                $this
-                    ->logger
-                    ->error(
-                        $e->getMessage(),
-                        ['response' => $body]
-                    );
+                $parsed = false;
             }
 
-            if ((null !== $parsed) && (null !== $xpath)) {
-                try {
-                    $parsedXml = $parsed->xpath($xpath);
-                } catch (\Exception $e) {
-                    $parsedXml = [];
-                }
-
-                if ([] === $parsedXml || false === $parsedXml) {
-                    return null;
-                }
-
-                if (false !== $parsedXmlElement = \current($parsedXml)) {
-                    $parsed = $parsedXmlElement;
-                }
+            if (false === $parsed) {
+                return null;
             }
         }
 
         return $parsed;
+    }
+
+    /**
+     * @param null|\Psr\Http\Message\ResponseInterface $response
+     *
+     * @return null|\Psr\Http\Message\ResponseInterface
+     */
+    public function validateProxyTicketRequest(?ResponseInterface $response): ?ResponseInterface
+    {
+        if (null === $response) {
+            return null;
+        }
+
+        if (null === $parsedXml = $this->parseResponse($response)) {
+            return null;
+        }
+
+        if (0 === $parsedXml->proxySuccess->count()) {
+            return null;
+        }
+
+        return $response;
     }
 
     /**
@@ -219,7 +231,11 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             return null;
         }
 
-        if (null === $this->parseResponse($response, '//cas:authenticationSuccess')) {
+        if (null === $parsedXml = $this->parseResponse($response)) {
+            return null;
+        }
+
+        if (0 === $parsedXml->authenticationSuccess->count()) {
             return null;
         }
 
@@ -235,15 +251,19 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             return null;
         }
 
-        if (null === $this->parseResponse($response, '//cas:authenticationSuccess')) {
+        if (null === $parsedXml = $this->parseResponse($response)) {
             return null;
         }
 
-        $pgtIou = $this->parseResponse($response, '//cas:authenticationSuccess//cas:proxyGrantingTicket');
+        if (0 === $parsedXml->authenticationSuccess->count()) {
+            return null;
+        }
 
-        if (null !== $pgtIou) {
+        if (1 === $parsedXml->authenticationSuccess->proxyGrantingTicket->count()) {
+            $pgtIou = (string) $parsedXml->authenticationSuccess->proxyGrantingTicket;
+
             try {
-                $item = $this->getCache()->hasItem((string) $pgtIou[0]);
+                $item = $this->getCache()->hasItem($pgtIou);
             } catch (\Exception $e) {
                 $item = false;
             }
@@ -422,40 +442,6 @@ abstract class AbstractCasProtocol implements CasProtocolInterface
             $this
                 ->logger
                 ->error('Unable to find the "Content-Type" header in the response.');
-
-            return null;
-        }
-
-        return $response;
-    }
-
-    /**
-     * @param null|\Psr\Http\Message\ResponseInterface $response
-     *
-     * @return null|\Psr\Http\Message\ResponseInterface
-     */
-    protected function validateProxyTicketRequest(?ResponseInterface $response): ?ResponseInterface
-    {
-        if (null === $response) {
-            return null;
-        }
-
-        $xml = $this->parseResponse($response);
-
-        if (null === $xml) {
-            return null;
-        }
-
-        // If no <cas:proxySuccess> tag.
-        if ($xml->xpath('cas:proxySuccess') === []) {
-            $this
-                ->logger
-                ->error(
-                    'Invalid CAS response.',
-                    [
-                        'response' => (string) $response->getBody(),
-                    ]
-                );
 
             return null;
         }

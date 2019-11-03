@@ -1,0 +1,56 @@
+{
+  "name": "drupol/psrcas",
+  "type": "library",
+  "description": "PSR CAS, a standard library for CAS authentication.",
+  "keywords": [
+    "authentication",
+    "cas",
+    "psr",
+    "single-sign-on"
+  ],
+  "license": "MIT",
+  "require": {
+    "php": ">= 7.1.3",
+    "ext-json": "*",
+    "ext-libxml": "*",
+    "ext-simplexml": "*",
+    "psr/cache": "^1.0.1",
+    "psr/http-client": "^1.0.0",
+    "psr/http-factory": "^1.0.1",
+    "psr/http-message": "^1.0.1",
+    "psr/log": "^1.1.1 || ^1.1.0"
+  },
+  "require-dev": {
+    "drupol/php-conventions": "^1",
+    "friends-of-phpspec/phpspec-code-coverage": "^4.3.1 || ^5",
+    "infection/infection": "^0.13.6 || ^0.14",
+    "monolog/monolog": "^1.0",
+    "nyholm/psr7": "^1.2.1",
+    "nyholm/psr7-server": "^0.4.0",
+    "phpspec/phpspec": "^5.1.2 || ^6.0",
+    "phpspec/prophecy": "^1.9",
+    "phpstan/phpstan-strict-rules": "^0.11.1",
+    "phpunit/php-code-coverage": "^6.1.4 || ^7.0.8",
+    "scrutinizer/ocular": "^1.6",
+    "sebastian/comparator": "^3",
+    "symfony/cache": "^4.3",
+    "symfony/http-client": "^4.3.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "drupol\\psrcas\\": "./src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "spec\\drupol\\psrcas\\": "./spec/drupol/psrcas/",
+      "tests\\drupol\\psrcas\\": "./tests/"
+    }
+  },
+  "scripts": {
+    "grumphp": "./vendor/bin/grumphp run",
+    "phpinsights": "./vendor/bin/phpinsights analyse src/",
+    "phpspec": "./vendor/bin/phpspec run",
+    "scrutinizer": "./vendor/bin/ocular code-coverage:upload --format=php-clover build/logs/clover.xml"
+  }
+}

@@ -1,7 +1,7 @@
 Usage
 =====
 
-Apereo already provides a demo CAS server without no Proxy authentication mechanism enabled.
+Apereo_ already provides a demo CAS server without no proxy authentication mechanism enabled.
 
 In order to test the libraries here, I've setup another `CAS server with Proxy authentication enabled`_ this time.
 
@@ -24,15 +24,16 @@ Test `the bare PHP demo application`_ now.
 Symfony
 -------
 
-The PSR CAS library can be used in a Symfony 4 project through the package `drupol/cas-bundle`_
+The PSR CAS library can be used in a Symfony (4 or 5) project through the package `drupol/cas-bundle`_
 
-Test `the Symfony 4 bundle demo application`_ now.
+Test `the Symfony bundle demo application`_ now.
 
 See `the documentation of the PSR CAS Bundle`_ for more information.
 
+.. _Apereo: https://www.apereo.org/
 .. _drupol/cas-bundle: https://github.com/drupol/cas-bundle
 .. _the documentation of the PSR CAS Bundle: http://github.com/drupol/cas-bundle
-.. _the Symfony 4 bundle demo application: https://cas-bundle-demo.herokuapp.com/
+.. _the Symfony bundle demo application: https://cas-bundle-demo.herokuapp.com/
 .. _CAS server with Proxy authentication enabled: https://heroku-cas-server.herokuapp.com/cas/login
 .. _drupol/psrcas-client-poc: https://github.com/drupol/psrcas-client-poc/
 .. _the bare PHP demo application: https://psrcas-php-demo.herokuapp.com/

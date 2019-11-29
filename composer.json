@@ -18,18 +18,17 @@
     "psr/http-client": "^1.0.0",
     "psr/http-factory": "^1.0.1",
     "psr/http-message": "^1.0.1",
-    "psr/log": "^1.1.1 || ^1.1.0"
+    "psr/log": "^1.1.1"
   },
   "require-dev": {
     "drupol/php-conventions": "^1",
     "friends-of-phpspec/phpspec-code-coverage": "^4.3.1 || ^5",
-    "infection/infection": "^0.13.6 || ^0.14",
+    "infection/infection": "^0.13.6 || ^0.14 || ^0.15",
     "monolog/monolog": "^1.0",
     "nyholm/psr7": "^1.2.1",
     "nyholm/psr7-server": "^0.4.0",
-    "phpspec/phpspec": "^5.1.2 || ^6.0",
+    "phpspec/phpspec": "^5 || ^6",
     "phpstan/phpstan-strict-rules": "^0.11.1",
-    "scrutinizer/ocular": "^1.6",
     "symfony/cache": "^4.3",
     "symfony/http-client": "^4.3.6"
   },
@@ -47,7 +46,6 @@
   "scripts": {
     "grumphp": "./vendor/bin/grumphp run",
     "phpinsights": "./vendor/bin/phpinsights analyse src/",
-    "phpspec": "./vendor/bin/phpspec run",
-    "scrutinizer": "./vendor/bin/ocular code-coverage:upload --format=php-clover build/logs/clover.xml"
+    "phpspec": "./vendor/bin/phpspec run"
   }
 }

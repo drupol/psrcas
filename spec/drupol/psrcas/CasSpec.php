@@ -988,6 +988,15 @@ class CasSpec extends ObjectBehavior
             ->shouldHaveBeenCalledOnce();
     }
 
+    public function it_can_use_a_new_serverRequest()
+    {
+        $serverRequest = new ServerRequest('GET', 'http://app');
+
+        $this
+            ->withServerRequest($serverRequest)
+            ->shouldNotReturn($this);
+    }
+
     public function it_can_validate_a_bad_proxy_ticket(LoggerInterface $logger, CacheItemPoolInterface $cache, CacheItemInterface $cacheItem)
     {
         $properties = new CasProperties([

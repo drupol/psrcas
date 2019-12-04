@@ -37,7 +37,7 @@ final class Login extends Redirect implements RedirectInterface
             return null;
         }
 
-        return $this->createRedirectResponse((string) $this->getUri());
+        return $this->createRedirectResponse((string) $this->getUri($validatedParameters));
     }
 
     /**
@@ -76,18 +76,25 @@ final class Login extends Redirect implements RedirectInterface
      */
     protected function getProtocolProperties(): array
     {
-        return $this->getProperties()['protocol']['login'] ?? [];
+        $protocolProperties = $this->getProperties()['protocol']['login'] ?? [];
+
+        $protocolProperties['default_parameters'] += [
+            'service' => (string) $this->getServerRequest()->getUri(),
+        ];
+
+        return $protocolProperties;
     }
 
     /**
      * {@inheritdoc}
      */
-    private function getUri(): UriInterface
+    private function getUri(array $parameters = []): UriInterface
     {
-        $serverRequest = $this->getServerRequest()->getUri();
-        $parameters = $this->formatProtocolParameters($this->getParameters());
-
-        return $this->buildUri($serverRequest, 'login', $parameters);
+        return $this->buildUri(
+            $this->getServerRequest()->getUri(),
+            'login',
+            $parameters
+        );
     }
 
     /**

@@ -714,7 +714,7 @@ class CasSpec extends ObjectBehavior
             ->withServerRequest($request)
             ->login()
             ->getHeader('Location')
-            ->shouldReturn(['http://local/cas/login']);
+            ->shouldReturn(['http://local/cas/login?service=http%3A%2F%2Flocal%2F']);
 
         $request = new ServerRequest('GET', 'http://local/');
 
@@ -737,7 +737,7 @@ class CasSpec extends ObjectBehavior
             ->withServerRequest($request)
             ->login($parameters)
             ->getHeader('Location')
-            ->shouldReturn(['http://local/cas/login?custom=foo']);
+            ->shouldReturn(['http://local/cas/login?custom=foo&service=http%3A%2F%2Flocal%2F']);
 
         $request = new ServerRequest('GET', 'http://local/', ['referer' => 'http://referer/']);
 
@@ -760,7 +760,19 @@ class CasSpec extends ObjectBehavior
             ->withServerRequest($request)
             ->login($parameters)
             ->getHeader('Location')
+            ->shouldReturn(['http://local/cas/login?custom=foo&service=http%3A%2F%2Flocal%2F']);
+
+        $parameters = [
+            'custom' => 'foo',
+            'service' => null,
+        ];
+
+        $this
+            ->withServerRequest($request)
+            ->login($parameters)
+            ->getHeader('Location')
             ->shouldReturn(['http://local/cas/login?custom=foo']);
+
     }
 
     public function it_can_logout()
@@ -939,7 +951,7 @@ class CasSpec extends ObjectBehavior
             ->withServerRequest($request)
             ->login($parameters)
             ->getHeader('Location')
-            ->shouldReturn(['http://local/cas/login?renew=true']);
+            ->shouldReturn(['http://local/cas/login?renew=true&service=http%3A%2F%2Flocal%2F%3Frenew%3D0']);
 
         $request = new ServerRequest('GET', $from . '?renew=false');
 

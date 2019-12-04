@@ -126,6 +126,13 @@ abstract class Handler
             $query['service'] = (string) $query['service'];
         }
 
+        $query = array_filter(
+            $query,
+            static function ($parameter) {
+                return $parameter !== '';
+            }
+        );
+
         return $this->getUriFactory()
             ->createUri($properties['base_url'])
             ->withPath($baseUrl['path'] . $properties['protocol'][$name]['path'])

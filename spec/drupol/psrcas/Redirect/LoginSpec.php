@@ -73,7 +73,7 @@ class LoginSpec extends ObjectBehavior
             ->debug(
                 'Building service response redirection to {url}.',
                 [
-                    'url' => 'http://local/cas/login?renew=true',
+                    'url' => 'http://local/cas/login?renew=true&service=http%3A%2F%2Fapp%3Frenew%3D0',
                 ]
             )
             ->shouldHaveBeenCalledOnce();

@@ -12,22 +12,20 @@ use function array_key_exists;
 final class Properties implements PropertiesInterface
 {
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     private $properties;
 
     /**
      * Properties constructor.
      *
-     * @param array $properties
+     * @param array<string, mixed> $properties
      */
     public function __construct(array $properties)
     {
-        $this->properties = $properties;
+        $this->properties = $properties + ['protocol' => []];
 
-        $this->properties += ['protocol' => []];
-
-        foreach (array_keys($this->properties['protocol']) as $key) {
+        foreach (array_keys((array) $this->properties['protocol']) as $key) {
             $this->properties['protocol'][$key] += ['default_parameters' => []];
         }
     }
@@ -45,7 +43,7 @@ final class Properties implements PropertiesInterface
      *
      * @return bool
      */
-    public function offsetExists($offset): bool
+    public function offsetExists($offset)
     {
         return array_key_exists($offset, $this->properties);
     }
@@ -53,7 +51,7 @@ final class Properties implements PropertiesInterface
     /**
      * @param mixed $offset
      *
-     * @return mixed
+     * @return array<string, mixed>|string|null
      */
     public function offsetGet($offset)
     {
@@ -63,16 +61,20 @@ final class Properties implements PropertiesInterface
     /**
      * @param mixed $offset
      * @param mixed $value
+     *
+     * @return void
      */
-    public function offsetSet($offset, $value): void
+    public function offsetSet($offset, $value)
     {
         $this->properties[$offset] = $value;
     }
 
     /**
      * @param mixed $offset
+     *
+     * @return void
      */
-    public function offsetUnset($offset): void
+    public function offsetUnset($offset)
     {
         unset($this->properties[$offset]);
     }

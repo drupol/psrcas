@@ -17,7 +17,7 @@ interface IntrospectionInterface
     public function getFormat(): string;
 
     /**
-     * @return array
+     * @return array[]
      */
     public function getParsedResponse(): array;
 

@@ -16,7 +16,7 @@ interface CasInterface
     /**
      * Authenticate the request.
      *
-     * @return array|null
+     * @return array[]|null
      *   The user response if authenticated, null otherwise.
      */
     public function authenticate(): ?array;
@@ -32,7 +32,7 @@ interface CasInterface
     /**
      * Handle the request made on the proxy callback URL.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      * @param \Psr\Http\Message\ResponseInterface|null $response
      *   If provided, use that Response.
@@ -48,7 +48,7 @@ interface CasInterface
     /**
      * If not authenticated, redirect to CAS login.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      *
      * @return \Psr\Http\Message\ResponseInterface|null
@@ -59,7 +59,7 @@ interface CasInterface
     /**
      * Redirect to CAS logout.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      *
      * @return \Psr\Http\Message\ResponseInterface|null
@@ -70,7 +70,7 @@ interface CasInterface
     /**
      * Request a proxy ticket.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      * @param \Psr\Http\Message\ResponseInterface|null $response
      *   If provided, use that Response.
@@ -86,7 +86,7 @@ interface CasInterface
     /**
      * Request a proxy validation.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      * @param \Psr\Http\Message\ResponseInterface|null $response
      *   If provided, use that Response.
@@ -102,7 +102,7 @@ interface CasInterface
     /**
      * Request a service validation.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      * @param \Psr\Http\Message\ResponseInterface|null $response
      *   If provided, use that Response.
@@ -118,7 +118,7 @@ interface CasInterface
     /**
      * Request a ticket validation.
      *
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      *   The parameters related to the service.
      * @param \Psr\Http\Message\ResponseInterface|null $response
      *   If provided, use that Response.

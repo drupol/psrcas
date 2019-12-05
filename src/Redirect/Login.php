@@ -46,7 +46,6 @@ final class Login extends Redirect implements RedirectInterface
     protected function formatProtocolParameters(array $parameters): array
     {
         $parameters = parent::formatProtocolParameters($parameters);
-
         $parametersToSetToZero = [];
 
         foreach (['gateway', 'renew'] as $queryParameter) {
@@ -59,13 +58,13 @@ final class Login extends Redirect implements RedirectInterface
         }
 
         if (true === array_key_exists('service', $parameters)) {
-            $parameters['service'] = $this->getUriFactory()->createUri((string) $parameters['service']);
+            $service = $this->getUriFactory()->createUri($parameters['service']);
 
             foreach ($parametersToSetToZero as $parameterToSetToZero) {
-                $parameters['service'] = Uri::withParam($parameters['service'], $parameterToSetToZero, '0');
+                $service = Uri::withParam($service, $parameterToSetToZero, '0');
             }
 
-            $parameters['service'] = (string) $parameters['service'];
+            $parameters['service'] = (string) $service;
         }
 
         return $parameters;
@@ -86,7 +85,9 @@ final class Login extends Redirect implements RedirectInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @param string[] $parameters
+     *
+     * @return \Psr\Http\Message\UriInterface
      */
     private function getUri(array $parameters = []): UriInterface
     {
@@ -98,7 +99,9 @@ final class Login extends Redirect implements RedirectInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @param string[] $parameters
+     *
+     * @return string[]|null
      */
     private function validate(array $parameters): ?array
     {
@@ -113,10 +116,6 @@ final class Login extends Redirect implements RedirectInterface
                 ->error('Unable to get the Login response, gateway and renew parameter cannot be set together.');
 
             return null;
-        }
-
-        if (true === array_key_exists('service', $parameters)) {
-            $parameters['service'] = $this->getUriFactory()->createUri($parameters['service']);
         }
 
         foreach (['gateway', 'renew'] as $queryParameter) {

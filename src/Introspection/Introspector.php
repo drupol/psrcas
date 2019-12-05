@@ -76,7 +76,7 @@ final class Introspector implements IntrospectorInterface
      *
      * @throws InvalidArgumentException
      *
-     * @return array
+     * @return mixed[]
      */
     public static function parse(ResponseInterface $response, string $format = 'XML'): array
     {

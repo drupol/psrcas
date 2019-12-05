@@ -96,6 +96,7 @@ EOF;
                     break;
                 case 'http://local/cas/proxyValidate?service=service&ticket=ST-ticket-pgt':
                 case 'http://local/cas/proxyValidate?ticket=ST-ticket-pgt&service=http%3A%2F%2Ffrom':
+                case 'http://local/cas/proxyValidate?service=http%3A%2F%2Ffrom&ticket=PT-ticket':
                 case 'http://local/cas/proxyValidate?service=http%3A%2F%2Flocal%2Fcas%2FproxyValidate%3Fservice%3Dhttp%253A%252F%252Ffrom&ticket=PT-ticket-pgt':
                     $body = <<< 'EOF'
 <cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
@@ -104,7 +105,7 @@ EOF;
   <cas:proxyGrantingTicket>pgtIou</cas:proxyGrantingTicket>
   <cas:proxies>
     <cas:proxy>http://app/proxyCallback.php</cas:proxy>
-  </cas:proxies>  
+  </cas:proxies>
  </cas:authenticationSuccess>
 </cas:serviceResponse>
 EOF;
@@ -119,20 +120,6 @@ EOF;
         }
     }
 }
-EOF;
-
-                    break;
-                case 'http://local/cas/proxyValidate?service=http%3A%2F%2Ffrom&ticket=PT-ticket':
-                    $body = <<< 'EOF'
-<cas:serviceResponse xmlns:cas="http://www.yale.edu/tp/cas">
- <cas:authenticationSuccess>
-  <cas:user>username</cas:user>
-  <cas:proxyGrantingTicket>pgtIou</cas:proxyGrantingTicket>
-  <cas:proxies>
-    <cas:proxy>http://app/proxyCallback.php</cas:proxy>
-  </cas:proxies>
- </cas:authenticationSuccess>
-</cas:serviceResponse>
 EOF;
 
                     break;

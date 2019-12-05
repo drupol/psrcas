@@ -63,7 +63,7 @@ class Cas extends AbstractCas
         array $parameters = [],
         ?ResponseInterface $response = null
     ): ?ResponseInterface {
-        $this->cas->handleProxyCallback($parameters, $response);
+        return $this->cas->handleProxyCallback($parameters, $response);
     }
 
     public function login(array $parameters = []): ?ResponseInterface

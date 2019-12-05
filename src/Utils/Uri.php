@@ -26,7 +26,7 @@ final class Uri
     /**
      * @param \Psr\Http\Message\UriInterface $uri
      *
-     * @return array
+     * @return string[]
      */
     public static function getParams(UriInterface $uri): array
     {
@@ -104,7 +104,7 @@ final class Uri
 
     /**
      * @param \Psr\Http\Message\UriInterface $uri
-     * @param array $params
+     * @param string[] $params
      * @param bool $force
      *
      * @return \Psr\Http\Message\UriInterface

@@ -45,7 +45,7 @@ abstract class Service extends Handler
      * Service constructor.
      *
      * @param ServerRequestInterface $serverRequest
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      * @param \drupol\psrcas\Configuration\PropertiesInterface $properties
      * @param \Psr\Http\Client\ClientInterface $client
      * @param \Psr\Http\Message\UriFactoryInterface $uriFactory
@@ -201,7 +201,7 @@ abstract class Service extends Handler
      *
      * @param \Psr\Http\Message\ResponseInterface $response
      *
-     * @return array
+     * @return array[]|string[]
      *   The parsed response.
      */
     protected function parse(ResponseInterface $response): array
@@ -228,9 +228,9 @@ abstract class Service extends Handler
     }
 
     /**
-     * @param array $response
+     * @param array[] $response
      *
-     * @return array|null
+     * @return array[]|null
      */
     protected function updateParsedResponseWithPgt(array $response): ?array
     {

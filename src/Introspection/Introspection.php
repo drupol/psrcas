@@ -14,7 +14,7 @@ abstract class Introspection
     private $format;
 
     /**
-     * @var array
+     * @var array[]
      */
     private $parsedResponse;
 
@@ -26,7 +26,7 @@ abstract class Introspection
     /**
      * Introspection constructor.
      *
-     * @param array $parsedResponse
+     * @param array[] $parsedResponse
      * @param string $format
      * @param \Psr\Http\Message\ResponseInterface $response
      */
@@ -46,7 +46,7 @@ abstract class Introspection
     }
 
     /**
-     * @return array
+     * @return array[]
      */
     public function getParsedResponse(): array
     {

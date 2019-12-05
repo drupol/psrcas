@@ -403,6 +403,7 @@ class CasSpec extends ObjectBehavior
         $this
             ->requestProxyValidate()
             ->shouldBeNull();
+
         $logger
             ->error('Error during the proxy validate request.')
             ->shouldHaveBeenCalledOnce();
@@ -772,7 +773,6 @@ class CasSpec extends ObjectBehavior
             ->login($parameters)
             ->getHeader('Location')
             ->shouldReturn(['http://local/cas/login?custom=foo']);
-
     }
 
     public function it_can_logout()

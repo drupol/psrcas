@@ -42,7 +42,7 @@ final class SimpleXml
     /**
      * @param SimpleXMLElement $xml
      *
-     * @return array
+     * @return array[]|null[]|string[]
      */
     public static function toArray(SimpleXMLElement $xml): array
     {
@@ -52,7 +52,7 @@ final class SimpleXml
     /**
      * @param SimpleXMLElement $element
      *
-     * @return array|null
+     * @return array[]
      */
     private static function toArrayRecursive(SimpleXMLElement $element): ?array
     {

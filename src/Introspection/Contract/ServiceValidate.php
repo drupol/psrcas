@@ -10,12 +10,12 @@ namespace drupol\psrcas\Introspection\Contract;
 interface ServiceValidate extends IntrospectionInterface
 {
     /**
-     * @return array
+     * @return array[]
      */
     public function getCredentials(): array;
 
     /**
-     * @return array
+     * @return array[]
      */
     public function getProxies(): array;
 }

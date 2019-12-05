@@ -32,7 +32,7 @@ abstract class Handler
     private $logger;
 
     /**
-     * @var array
+     * @var array[]|string[]
      */
     private $parameters;
 
@@ -65,7 +65,7 @@ abstract class Handler
      * Handler constructor.
      *
      * @param ServerRequestInterface $serverRequest
-     * @param array $parameters
+     * @param array[]|string[] $parameters
      * @param \drupol\psrcas\Configuration\PropertiesInterface $properties
      * @param \Psr\Http\Message\UriFactoryInterface $uriFactory
      * @param ResponseFactoryInterface $responseFactory
@@ -96,7 +96,7 @@ abstract class Handler
     /**
      * @param \Psr\Http\Message\UriInterface $from
      * @param string $name
-     * @param array $query
+     * @param string[]|UriInterface[] $query
      *
      * @return \Psr\Http\Message\UriInterface
      */
@@ -111,7 +111,7 @@ abstract class Handler
                 $properties['protocol'][$name]['allowed_parameters'] ?? [],
                 $properties['protocol'][$name]['allowed_parameters'] ?? []
             )
-        );
+        ) + Uri::getParams($from);
 
         $baseUrl = parse_url($properties['base_url']);
 
@@ -126,41 +126,50 @@ abstract class Handler
             $query['service'] = (string) $query['service'];
         }
 
+        // Filter out empty $query parameters
         $query = array_filter(
             $query,
-            static function ($parameter) {
-                return $parameter !== '';
+            static function (string $item): bool {
+                return '' !== $item;
             }
         );
 
         return $this->getUriFactory()
             ->createUri($properties['base_url'])
             ->withPath($baseUrl['path'] . $properties['protocol'][$name]['path'])
-            ->withQuery(http_build_query($query + Uri::getParams($from)))
+            ->withQuery(http_build_query($query))
             ->withFragment($from->getFragment());
     }
 
     /**
-     * @param array $parameters
+     * @param array[]|bool[]|string[] $parameters
      *
-     * @return array
+     * @return string[]
      */
     protected function formatProtocolParameters(array $parameters): array
     {
         $parameters = array_filter(
-            $parameters,
+            $parameters
+        );
+
+        $parameters = array_map(
             static function ($parameter) {
-                return false !== $parameter;
-            }
+                return true === $parameter ? 'true' : $parameter;
+            },
+            $parameters
         );
 
         if (true === array_key_exists('service', $parameters)) {
-            $parameters['service'] = Uri::removeParams(
-                $this->getUriFactory()->createUri(
-                    (string) $parameters['service']
-                ),
+            $service = $this->getUriFactory()->createUri(
+                $parameters['service']
+            );
+
+            $service = Uri::removeParams(
+                $service,
                 'ticket'
             );
+
+            $parameters['service'] = (string) $service;
         }
 
         return $parameters;
@@ -183,7 +192,7 @@ abstract class Handler
     }
 
     /**
-     * @return array
+     * @return array[]
      */
     protected function getParameters(): array
     {
@@ -201,7 +210,7 @@ abstract class Handler
     /**
      * Get the scoped properties of the protocol endpoint.
      *
-     * @return array
+     * @return array[]
      */
     protected function getProtocolProperties(): array
     {

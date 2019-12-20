@@ -21,13 +21,13 @@
     "psr/log": "^1.1.1 || ^1.1.0"
   },
   "require-dev": {
-    "drupol/php-conventions": "^1.6.8",
+    "drupol/php-conventions": "^1.6.9",
     "friends-of-phpspec/phpspec-code-coverage": "^4.3",
     "infection/infection": "^0.12.2 || ^0.13.6 || ^0.14.4 || ^0.15.0",
     "monolog/monolog": "^1.0",
     "nyholm/psr7": "^1.2.1",
     "nyholm/psr7-server": "^0.4.1",
-    "phpspec/phpspec": "^5.1.2 || ^6.1",
+    "phpspec/phpspec": "^5.1.2 || ^6.1.1",
     "phpstan/phpstan-strict-rules": "^0.12",
     "symfony/cache": "^4.3 || ^4.4",
     "symfony/http-client": "^4.4"

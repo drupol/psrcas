@@ -7,6 +7,7 @@ namespace spec\drupol\psrcas;
 use drupol\psrcas\Cas;
 use drupol\psrcas\Configuration\Properties as CasProperties;
 use drupol\psrcas\Utils\SimpleXml;
+use Exception;
 use InvalidArgumentException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -1402,6 +1403,10 @@ EOF;
         $cacheItemPgtIou
             ->get()
             ->willReturn('pgtIou');
+
+        $cache
+            ->getItem('false')
+            ->willThrow(Exception::class);
 
         $cache
             ->hasItem('unknownPgtIou')

@@ -22,7 +22,7 @@
   },
   "require-dev": {
     "drupol/php-conventions": "^1.6.10",
-    "friends-of-phpspec/phpspec-code-coverage": "^4.3",
+    "friends-of-phpspec/phpspec-code-coverage": "^4.3.2",
     "infection/infection": "^0.12.2 || ^0.13.6 || ^0.14.4 || ^0.15.0",
     "monolog/monolog": "^1.0",
     "nyholm/psr7": "^1.2.1",

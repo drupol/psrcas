@@ -30,6 +30,7 @@
     "phpspec/phpspec": "^5.1.2 || ^6.1.1",
     "phpspec/prophecy": "^1.10.1",
     "phpstan/phpstan-strict-rules": "^0.12",
+    "scrutinizer/ocular": "^1.6",
     "symfony/cache": "^4.3.9 || ^4.4.2",
     "symfony/http-client": "^4.4.2"
   },
